@@ -20,6 +20,8 @@ public class Server {
      */
     HashMap<UserType, Integer> activeUsers = new HashMap<>();
 
+    //TODO: Transactions list
+
     /**
      * Runs the client
      */
@@ -156,6 +158,7 @@ public class Server {
                 try // read message and display it
                 {
                     message = (String) input.readObject(); // read new message
+
                     displayMessage("\n" + myConID + message); // display message
                 } // end try
                 catch (ClassNotFoundException classNotFoundException) {

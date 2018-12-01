@@ -1,12 +1,10 @@
 import java.util.HashMap;
 
-enum UserType {
-    BUYER, SELLER, BOTH;
-}
+
 
 public class User {
 
-    private final UserType modifier;
+    private final Permission modifier;
 
     private final String name;
 
@@ -22,10 +20,10 @@ public class User {
      */
     User(int type, String username, String pass){
         switch (type){
-            case 1: modifier = UserType.SELLER; break;
-            case 2: modifier = UserType.BUYER; break;
-            case 3: modifier = UserType.BOTH; break;
-            default: modifier = UserType.SELLER; break;
+            case 1: modifier = new Permission(UserType.SELLER); break;
+            case 2: modifier = new Permission(UserType.BUYER); break;
+            case 3: modifier = new Permission(UserType.BOTH); break;
+            default: modifier = new Permission(UserType.BUYER); break;
         }
         name = username;
         password = pass;
@@ -39,7 +37,7 @@ public class User {
         return password;
     }
 
-    public UserType getModifier() {
+    public Permission getModifier() {
         return modifier;
     }
 
