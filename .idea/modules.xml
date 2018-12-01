@@ -3,8 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/ECommerce/ECommerce.iml" filepath="$PROJECT_DIR$/ECommerce/ECommerce.iml" />
-      <module fileurl="file://$PROJECT_DIR$/scratch/clientTypes/clientTypes.iml" filepath="$PROJECT_DIR$/scratch/clientTypes/clientTypes.iml" />
       <module fileurl="file://$PROJECT_DIR$/scratch/scratch.iml" filepath="$PROJECT_DIR$/scratch/scratch.iml" />
+      <module fileurl="file://$PROJECT_DIR$/scratch2/scratch2.iml" filepath="$PROJECT_DIR$/scratch2/scratch2.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/team19_swd.iml" filepath="$PROJECT_DIR$/.idea/team19_swd.iml" />
     </modules>
   </component>

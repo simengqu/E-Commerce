@@ -4,13 +4,17 @@ import java.util.Map;
 public class Item {
 
     private String itemName;
+    private int itemID;
+    private double price;
     private String description;
     private HashMap<String, Integer> sellers;
     private HashMap<String, Integer> buyers;
 
 
-    public Item(String itemName, String description) {
+    public Item(String itemName, String description, int itemID, double price) {
         this.itemName = itemName;
+        this.itemID = itemID;
+        this.price = price;
         this.description = description;
         sellers = new HashMap<>();
         buyers = new HashMap<>();
@@ -101,7 +105,7 @@ public class Item {
     public String getSellers(){
 
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("Available Sellers: \n");
+        //stringBuilder.append("Available Sellers: \n");
         for (Map.Entry<String, Integer> entry : sellers.entrySet()){
             stringBuilder.append(entry.getKey() + ": " + entry.getValue() + "\n");
         }
@@ -118,5 +122,29 @@ public class Item {
         }
 
         return stringBuilder.toString();
+    }
+
+    public int getItemID(){
+        return itemID;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    @Override
+    public String toString(){
+        return String.format(
+                "%s: %s%n%s: %s%n%s: %s%n%s: %s%n%s:%n%s",
+                "Product:", this.itemName,
+                "Item ID:", this.itemID,
+                "Price", this.price,
+                "Description:", this.description,
+                "Available sellers:", this.getSellers()
+        );
     }
 }
