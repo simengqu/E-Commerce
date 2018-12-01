@@ -1,7 +1,7 @@
 /**
  * Types of permission levels
  */
-enum UserType{BUYER, SELLER, BOTH}
+enum UserType{BUYER, SELLER, BOTH, NONE}
 
 /**
  * Class containing permission level for clients
@@ -29,7 +29,7 @@ public class Permission {
            case "BUYER": permissionLevel = UserType.BUYER; break;
            case "SELLER": permissionLevel = UserType.SELLER; break;
            case "BOTH": permissionLevel = UserType.BOTH; break;
-           default: permissionLevel = UserType.BUYER; break;
+           default: permissionLevel = UserType.NONE; break;
        }
    }
 
@@ -47,7 +47,11 @@ public class Permission {
            case BUYER: return "BUYER";
            case SELLER: return "SELLER";
            case BOTH: return "BOTH";
-           default: return "Error";
+           default: return "NONE";
        }
    }
+
+    public void setPermissionLevel(UserType permissionLevel) {
+        this.permissionLevel = permissionLevel;
+    }
 }

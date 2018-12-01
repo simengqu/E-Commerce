@@ -23,7 +23,7 @@ public class User {
             case 1: modifier = new Permission(UserType.SELLER); break;
             case 2: modifier = new Permission(UserType.BUYER); break;
             case 3: modifier = new Permission(UserType.BOTH); break;
-            default: modifier = new Permission(UserType.BUYER); break;
+            default: modifier = new Permission(UserType.NONE); break;
         }
         name = username;
         password = pass;
