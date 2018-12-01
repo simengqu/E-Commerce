@@ -48,6 +48,10 @@ public class Item {
 
     }
 
+    /**
+     * clear buyer's cart
+     * @param buyer buyer id
+     */
     public void clearCart(String buyer){
 
         if (buyers.containsKey(buyer)) {
@@ -58,6 +62,11 @@ public class Item {
         }
     }
 
+    /**
+     * change seller's inventory
+     * @param seller    seller id
+     * @param numItems  number of items added/sold
+     */
     public void changeInventory(String seller, Integer numItems){
 
         if (sellers.containsKey(seller)){
@@ -65,6 +74,11 @@ public class Item {
         }
     }
 
+    /**
+     * get current inventory of the item
+     * @param seller    seller id
+     * @return          number of items left
+     */
     public Integer getCurrentInventory(String seller){
         if (sellers.containsKey(seller)){
             return sellers.get(seller);
