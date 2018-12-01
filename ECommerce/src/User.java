@@ -10,41 +10,66 @@ public class User {
 
     private final String password;
 
-    private HashMap<String, Integer> activeItems;
-
+    private int userID;
+    private HashMap<String, Integer> itemsToSell;
+    private HashMap<String, Integer> itemsToBuy;
     /**
      * Constructor to make a User
      * @param type type of User, buyer, seller, or both
      * @param username name
      * @param pass password
      */
-    User(int type, String username, String pass){
-        switch (type){
-            case 1: modifier = new Permission(UserType.SELLER); break;
-            case 2: modifier = new Permission(UserType.BUYER); break;
-            case 3: modifier = new Permission(UserType.BOTH); break;
-            default: modifier = new Permission(UserType.NONE); break;
-        }
+    User(String type, String username, String pass, int userID){
+        modifier = new Permission(type);
         name = username;
         password = pass;
+        this.userID = userID;
+        itemsToSell = new HashMap<>();
+        itemsToBuy = new HashMap<>();
     }
 
-    public String getName() {
-        return name;
+
+    public String getName() { return name; }
+
+    public String getPassword() { return password; }
+
+    public Permission getModifier() { return modifier; }
+
+    public int getUserID(){
+        return userID;
     }
 
-    public String getPassword() {
-        return password;
+    public void setUserID(int userID){
+        this.userID = userID;
     }
 
-    public Permission getModifier() {
-        return modifier;
+    public HashMap<String, Integer> getItemsToSell(){
+        return itemsToSell;
     }
 
-    //Check if the user can login to their account
-    public static boolean login(String user, String pass, String correctUser, String correctPass){
-        return (user.compareTo(correctUser) == 0 && pass.compareTo(correctPass) == 0);
+    public void setItemToSell(String itemName, Integer numItems){
+
+        if (!itemsToSell.containsKey(itemName)){
+            itemsToSell.put(itemName, numItems);
+        }
+        else {
+            itemsToSell.replace(itemName, itemsToSell.get(itemName) + numItems);
+        }
     }
 
-    //TODO: Create functionality to save client object in database.
+    public HashMap<String, Integer> getItemsToBuy(){
+        return itemsToBuy;
+    }
+
+    public void setItemsToBuy(String itemName, Integer numItems){
+
+        if (!itemsToBuy.containsKey(itemName)){
+            itemsToBuy.put(itemName, numItems);
+        }
+        else {
+            itemsToBuy.replace(itemName, itemsToBuy.get(itemName) + numItems);
+        }
+    }
+
+    //TODO: Create functionality to save client object in database or file.
 }

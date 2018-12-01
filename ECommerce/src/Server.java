@@ -10,10 +10,20 @@ import java.util.concurrent.ExecutorService;
 
 
 public class Server {
+    //JUST FOR RECORD KEEPING, REMOVE LATER
+    private static final String messageTypes[] = {"MESSAGE","ERROR", "PERMISSION","ACCOUNT",
+                                                  "TRANSACTION", "BUY", "SELL","MAP"};
+
     /**
      * Place to store Items
+     * TODO: EDIT ITEM LIST TO CONTAIN ITEMS
      */
     HashMap<String, Integer> itemList = new HashMap<>();
+
+    /**
+     * Maintains every user account
+     */
+    HashMap<String, User> userAccounts = new HashMap<>();
 
     /**
      * Maintains number of active users at any given time
@@ -88,6 +98,7 @@ public class Server {
         ); // end call to SwingUtilities.invokeLater
     } // end method displayMessage
 
+    //TODO: Read in file of User Information/Item Information/Transaction History or Maintain Database
 
     //TODO: Edit number of active users
     private void newClient(Socket client){
@@ -150,14 +161,26 @@ public class Server {
 
         // process connection with client
         private void processConnection() throws IOException {
+            //TODO: SEND ALL INFORMATION IN CURRENT LIST OF ITEMS TO CLIENT AT CONNECTION START
             String message = "Connection " + myConID + " successful";
-            sendData(message); // send connection successful message
+            sendData(message, "MESSAGE"); // send connection successful message
 
             do // process messages sent from client
             {
                 try // read message and display it
                 {
-                    message = (String) input.readObject(); // read new message
+                    String type = (String) input.readObject();
+                    //Chooses which type of processes to run and messages to send to client
+                    if(type.equals("PERMISSION")){
+                        sendPermission((String) input.readObject(), (String) input.readObject());
+                    }
+                    else if(type.equals("ACCOUNT")){
+                        sendAccount((String) input.readObject(), (String) input.readObject(), (String) input.readObject());
+                    }
+                    else if(type.equals("TRANSACTION")){
+
+                    }
+                    else message = (String) input.readObject(); // read new message
 
                     displayMessage("\n" + myConID + message); // display message
                 } // end try
@@ -184,9 +207,11 @@ public class Server {
             } // end catch
         } // end method closeConnection
 
-        private void sendData(String message) {
+        private void sendData(String message, String type) {
             try // send object to client
             {
+                //TWO INPUTS AND OUTPUTS
+                output.writeObject(type);
                 output.writeObject("SERVER" + myConID + ">>> " + message);
                 output.flush(); // flush output to client
                 displayMessage("\nSERVER" + myConID + ">>> " + message);
@@ -196,6 +221,63 @@ public class Server {
             } // end catch
         } // end method sendData
 
+        private void sendPermission(String login, String pass){
+            boolean check = checkLoginInfo(login, pass);
+            try{
+                if(check) {
+                    output.writeObject("PERMISSION");
+                    output.writeObject(userAccounts.get(login).getModifier());
+                }
+                else {
+                    output.writeObject("MESSAGE");
+                    output.writeObject("Incorrect Username/Password");
+                }
+
+            }//end try
+            catch(IOException ioException){
+                //TODO: SHOW ERROR//
+            }//end Catch
+        }// end method permission
+
+        private void sendAccount(String login, String pass, String permission){
+            try{
+                if(!checkUsername(login)){
+                    userAccounts.put(login, new User(permission, login, pass, userAccounts.size()+1));
+                    output.writeObject("ACCOUNT");
+                    output.writeObject(new Permission(permission));
+                } else {
+                    output.writeObject("MESSAGE");
+                    output.writeObject("Incorrect Username/Password");
+                }
+
+            }//end try
+            catch(IOException ioException){
+                //TODO: SHOW ERROR//
+            }//end Catch
+        }//End sendAccount
+
+        //Send a whole list to the client to be read
+        private void sendList(){
+            try{
+                output.writeObject("MAP");
+                output.writeObject(itemList);
+            }
+            catch(IOException ioException){
+                //TODO: SHOW ERROR//
+            }//end Catch
+        }
+
+        private boolean checkLoginInfo(String login, String pass){
+            if(checkUsername(login)){
+                if(userAccounts.get(login).getPassword() == pass){
+                    return true;
+                }
+            }
+            return false;
+        }
+        private boolean checkUsername(String login){
+            return(userAccounts.containsKey(login));
+        }
 
     } // end class SockServer
 }
