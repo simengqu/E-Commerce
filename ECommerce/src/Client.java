@@ -7,6 +7,10 @@ import java.net.InetAddress;
 import java.net.Socket;
 
 public class Client {
+    private static final String messageTypes[] = {"MESSAGE","ERROR", "PERMISSION","ACCOUNT",
+            "TRANSACTION","MAP"};
+
+
     private ObjectOutputStream output; // output stream to server
     private ObjectInputStream input; // input stream from server
     private String message = ""; // message from server
@@ -72,6 +76,9 @@ public class Client {
                 }
                 else if(type.equals("ACCOUNT")){
                     permissionType = (Permission) input.readObject();
+                }
+                else if(type.equals("TRANSACTION")){
+                    //TODO: UPDATE WINDOW OF ITEMS WHEN A TRANSACTION HAPPENS
                 }
                 else {
                     message = (String) input.readObject(); // read new message

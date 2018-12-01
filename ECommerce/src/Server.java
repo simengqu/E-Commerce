@@ -163,7 +163,7 @@ public class Server {
         private void processConnection() throws IOException {
             //TODO: SEND ALL INFORMATION IN CURRENT LIST OF ITEMS TO CLIENT AT CONNECTION START
             String message = "Connection " + myConID + " successful";
-            sendData(message, "MESSAGE"); // send connection successful message
+            sendData(message); // send connection successful message
 
             do // process messages sent from client
             {
@@ -207,11 +207,11 @@ public class Server {
             } // end catch
         } // end method closeConnection
 
-        private void sendData(String message, String type) {
+        private void sendData(String message) {
             try // send object to client
             {
                 //TWO INPUTS AND OUTPUTS
-                output.writeObject(type);
+                output.writeObject("MESSAGE");
                 output.writeObject("SERVER" + myConID + ">>> " + message);
                 output.flush(); // flush output to client
                 displayMessage("\nSERVER" + myConID + ">>> " + message);
@@ -227,11 +227,14 @@ public class Server {
                 if(check) {
                     output.writeObject("PERMISSION");
                     output.writeObject(userAccounts.get(login).getModifier());
+
                 }
                 else {
                     output.writeObject("MESSAGE");
                     output.writeObject("Incorrect Username/Password");
                 }
+                output.flush();
+
 
             }//end try
             catch(IOException ioException){

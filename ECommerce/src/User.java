@@ -13,6 +13,8 @@ public class User {
     private int userID;
     private HashMap<String, Integer> itemsToSell;
     private HashMap<String, Integer> itemsToBuy;
+
+
     /**
      * Constructor to make a User
      * @param type type of User, buyer, seller, or both
