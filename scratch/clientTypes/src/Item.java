@@ -1,16 +1,20 @@
 import java.util.HashMap;
+import java.util.Map;
 
 public class Item {
 
     private String itemName;
+    private String description;
     private HashMap<String, Integer> sellers;
     private HashMap<String, Integer> buyers;
-    private String description;
+
 
     public Item(String itemName, String description) {
         this.itemName = itemName;
         this.description = description;
         sellers = new HashMap<>();
+        buyers = new HashMap<>();
+
     }
 
     /**
@@ -84,5 +88,35 @@ public class Item {
             return sellers.get(seller);
         }
         else return 0;
+    }
+
+    public String getDescription(){
+        return description;
+    }
+
+    public String getItemName(){
+        return itemName;
+    }
+
+    public String getSellers(){
+
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("Available Sellers: \n");
+        for (Map.Entry<String, Integer> entry : sellers.entrySet()){
+            stringBuilder.append(entry.getKey() + ": " + entry.getValue() + "\n");
+        }
+
+        return stringBuilder.toString();
+    }
+
+    public String getBuyers(){
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (Map.Entry<String, Integer> entry : buyers.entrySet()){
+            stringBuilder.append(entry.getKey() + ": " + entry.getValue() + "\n");
+        }
+
+        return stringBuilder.toString();
     }
 }
