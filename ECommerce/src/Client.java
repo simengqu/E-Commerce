@@ -69,8 +69,10 @@ public class Client {
         {
             try // read message and display it
             {
-                //Server needs to send 2 messages: 1 for how to handle the second message
+                //Server needs to send at least 1 message for how to handle the second message
                 String type = (String) input.readObject();
+
+                //Find the type of command to run
                 if(type.equals("PERMISSION")){
                     permissionType = (Permission) input.readObject();
                 }
@@ -79,6 +81,15 @@ public class Client {
                 }
                 else if(type.equals("TRANSACTION")){
                     //TODO: UPDATE WINDOW OF ITEMS WHEN A TRANSACTION HAPPENS
+                }
+                else if(type.equals("MAP")){
+                    //TODO: ADD FUNCTIONALITY TO USE THE LIST OF NAMES FROM THE SERVER
+                    for(int i = 0; i < input.readInt(); i++){
+                        input.readObject();
+                    }
+                }
+                else if(type.equals("ERROR")){
+                    //TODO: Dialog box :)
                 }
                 else {
                     message = (String) input.readObject(); // read new message

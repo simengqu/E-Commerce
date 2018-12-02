@@ -1,4 +1,7 @@
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -7,21 +10,25 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
-public class Server {
+public class Server extends JFrame {
     //JUST FOR RECORD KEEPING, REMOVE LATER
     private static final String messageTypes[] = {"MESSAGE","ERROR", "PERMISSION","ACCOUNT",
-                                                  "TRANSACTION", "BUY", "SELL","MAP"};
+                                                  "BUY", "SELL", "MAP", "CLOSE"};
+
+
+    private JTextArea displayArea; // display information to user
 
     /**
-     * Place to store Items
+     * Place to store Items. First is item Name
      * TODO: EDIT ITEM LIST TO CONTAIN ITEMS
      */
     HashMap<String, Integer> itemList = new HashMap<>();
 
     /**
-     * Maintains every user account
+     * Maintains every user account. First is Username
      */
     HashMap<String, User> userAccounts = new HashMap<>();
 
@@ -31,6 +38,7 @@ public class Server {
     HashMap<UserType, Integer> activeUsers = new HashMap<>();
 
     //TODO: Transactions list
+    HashMap<Integer, String> transactionsList = new HashMap<>();
 
     /**
      * Runs the client
@@ -49,9 +57,17 @@ public class Server {
 
     private int nClientsActive = 0;
 
-
+    //TODO: Make Server to display information, not do much else
     Server(){
+        super("Server");
 
+        connection = new SockServer[10]; // allocate array for up to 100 server threads
+        executor = Executors.newFixedThreadPool(10); // create thread pool
+        displayArea = new JTextArea(); // create displayArea
+        add(new JScrollPane(displayArea), BorderLayout.CENTER);
+
+        setSize(300, 150); // set size of window
+        setVisible(true); // show window
     }
 
     /**
@@ -93,6 +109,7 @@ public class Server {
                 new Runnable() {
                     public void run() // updates displayArea
                     {
+                        displayArea.append(messageToDisplay);
                     } // end method run
                 } // end anonymous inner class
         ); // end call to SwingUtilities.invokeLater
@@ -129,7 +146,7 @@ public class Server {
 
                 } // end try
                 catch (EOFException eofException) {
-                    displayMessage("\nServer" + myConID + " terminated connection");
+                    displayMessage("\nServer " + myConID + " terminated connection");
                 } finally {
                     closeConnection(); //  close connection
                 }// end catch
@@ -177,8 +194,10 @@ public class Server {
                     else if(type.equals("ACCOUNT")){
                         sendAccount((String) input.readObject(), (String) input.readObject(), (String) input.readObject());
                     }
-                    else if(type.equals("TRANSACTION")){
-
+                    else if(type.equals("BUY")){
+                        //TODO: SEND UPDATE ON TRANSACTION
+                        type = updateList(type, (String) input.readObject());
+                        sendList(type);
                     }
                     else message = (String) input.readObject(); // read new message
 
@@ -260,14 +279,40 @@ public class Server {
         }//End sendAccount
 
         //Send a whole list to the client to be read
-        private void sendList(){
+        private void sendList(String type){
             try{
-                output.writeObject("MAP");
-                output.writeObject(itemList);
+                output.writeObject(type);
+                //Ensure there is no Error in the HashMaps
+                if(type.equals("ERROR")){
+                    output.writeObject("ERROR");
+                    output.writeObject("That item doesn't exist!");
+                }
+                else {
+                    output.writeInt(itemList.size());
+                    for (String i : itemList.keySet()) {
+                        output.writeObject(i);
+                    }
+                }
             }
             catch(IOException ioException){
                 //TODO: SHOW ERROR//
             }//end Catch
+        }
+
+        //Removing/Decrementing Item
+        private String updateList(String nameOfItem, String type){
+            if(itemList.containsKey(nameOfItem)){
+//                if(itemList.get(nameOfItem).getInventory() > 0){
+//                  itemList.get(nameOfItem).decrementInventory();
+//                }
+//                else {itemList.remove(nameOfItem); return "ERROR";
+            }
+            return type;
+        }
+
+        //Adding new item
+        private void updateList(Integer item, String type){
+
         }
 
         private boolean checkLoginInfo(String login, String pass){
