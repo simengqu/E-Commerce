@@ -83,7 +83,7 @@ public class Client {
                     //TODO: UPDATE WINDOW OF ITEMS WHEN A TRANSACTION HAPPENS
                 }
                 else if(type.equals("MAP")){
-                    //TODO: ADD FUNCTIONALITY TO USE THE LIST OF NAMES FROM THE SERVER
+                    //TODO: ADD FUNCTIONALITY TO USE THE LIST OF NAMES FROM THE SERVER ON GUI
                     for(int i = 0; i < input.readInt(); i++){
                         input.readObject();
                     }
@@ -91,6 +91,7 @@ public class Client {
                 else if(type.equals("ERROR")){
                     //TODO: Dialog box :)
                 }
+                else if(type.equals("TERMINATE")) message = "TERMINATE";
                 else {
                     message = (String) input.readObject(); // read new message
                     displayMessage("\n" + message); // display message
@@ -100,7 +101,7 @@ public class Client {
                 displayMessage("\nUnknown object type received");
             } // end catch
 
-        } while (!message.equals("SERVER>>> TERMINATE"));
+        } while (!message.equals("TERMINATE"));
     } // end method processConnection
 
     // close streams and socket

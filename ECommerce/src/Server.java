@@ -23,7 +23,7 @@ public class Server extends JFrame {
 
     /**
      * Place to store Items. First is item Name
-     * TODO: EDIT ITEM LIST TO CONTAIN ITEMS
+     *
      */
     HashMap<String, Item> itemList = new HashMap<>();
 
@@ -32,7 +32,7 @@ public class Server extends JFrame {
      */
     HashMap<String, User> userAccounts = new HashMap<>();
 
-    //TODO: Transactions list
+    // Transactions list
     HashMap<Integer, String> transactionsList = new HashMap<>();
 
     /**
@@ -58,7 +58,7 @@ public class Server extends JFrame {
      */
     private int nClientsActive = 0;
 
-    //TODO: Make Server to display information, not do much else
+    //TMake Server to display information, not do much else
     Server(){
         super("Server");
 
@@ -116,11 +116,8 @@ public class Server extends JFrame {
         ); // end call to SwingUtilities.invokeLater
     } // end method displayMessage
 
-    //TODO: Read in file of User Information/Item Information/Transaction History or Maintain Database
+    //TODO: Read in file of User Information/Item Information/Transaction History or Maintain Database?
 
-    //TODO: Edit number of active users
-    private void newClient(Socket client){
-    }
 
 
     /* This new Inner Class implements Runnable and objects instantiated from this
@@ -179,7 +176,7 @@ public class Server extends JFrame {
 
         // process connection with client
         private void processConnection() throws IOException {
-            //TODO: SEND ALL INFORMATION IN CURRENT LIST OF ITEMS TO CLIENT AT CONNECTION START
+            //Send all information in current list to client to start item window
             String message = "Connection " + myConID + " successful";
             sendList("MAP"); // send first list of information
 
@@ -192,27 +189,29 @@ public class Server extends JFrame {
                     if(type.equals("PERMISSION")){ // Requires 3 inputs
                         sendPermission((String) input.readObject(), (String) input.readObject());
                     }
-                    else if(type.equals("ACCOUNT")){ // Requires 4 inputs
+                    else if(type.equals("ACCOUNT")){ // Requires 4 inputs (name, pass, type of user)
                         sendAccount((String) input.readObject(), (String) input.readObject(), (String) input.readObject());
                     }
-                    else if(type.equals("BUY")){ //Requires 2 inputs
-                        type = updateList((String) input.readObject(), type);
+                    else if(type.equals("BUY")){ //Requires 3 inputs (name of Item, string of stored info)
+                        type = updateList((String) input.readObject(), (String) input.readObject(), type);
                         sendList(type);
                     }
-                    else if(type.equals("SELL")){ //Requires 2 inputs
+                    else if(type.equals("SELL")){ //Requires 2 inputs, inputs new item into listings
                         Item x = (Item) input.readObject();
                         updateList(x, x.getItemName(), type);
-                        sendList(type);
+                        sendList("TRANSACTION");
                     }
-                    else message = (String) input.readObject(); // read new message (2 inputs)
+                    else if(type.equals("TERMINATE")) message = "TERMINATE"; //Requires 1 input
+                    else {message = (String) input.readObject(); // read new message (2 inputs)
 
                     displayMessage("\n" + myConID + message); // display message
+                    }
                 } // end try
                 catch (ClassNotFoundException classNotFoundException) {
                     displayMessage("\nUnknown object type received");
                 } // end catch
 
-            } while (!message.equals("CLIENT>>> TERMINATE"));
+            } while (!message.equals("TERMINATE"));
         } // end method processConnection
 
         // close streams and socket
@@ -231,6 +230,7 @@ public class Server extends JFrame {
             } // end catch
         } // end method closeConnection
 
+        //Function to send a message
         private void sendData(String message) {
             try // send object to client
             {
@@ -241,10 +241,11 @@ public class Server extends JFrame {
                 displayMessage("\nSERVER" + myConID + ">>> " + message);
             } // end try
             catch (IOException ioException) {
-                //TODO: Show error in display box
+                displayArea.append("\nError writing object");
             } // end catch
         } // end method sendData
 
+        //Function to send the client a level of permission
         private void sendPermission(String login, String pass){
             boolean check = checkLoginInfo(login, pass);
             try{
@@ -307,11 +308,18 @@ public class Server extends JFrame {
         }
 
         //Removing/Decrementing Item
-        private String updateList(String nameOfItem, String type){
+        private String updateList(String nameOfItem, String formattedInformation, String type){
             if(itemList.containsKey(nameOfItem)){
                 if(itemList.get(nameOfItem).getInventory() > 0){
-                  itemList.get(nameOfItem).decrementInventory();
+                    addTransaction(formattedInformation);
+                    itemList.get(nameOfItem).decrementInventory();
+
+                    //Remove Item if Inventory gone
+                    if(itemList.get(nameOfItem).getInventory() == 0){
+                        itemList.remove(nameOfItem);
+                    }
                 }
+                //Error that shouldn't happen
                 else {
                     itemList.remove(nameOfItem);
                     return "ERROR";
@@ -320,7 +328,10 @@ public class Server extends JFrame {
             else {
                 return "ERROR";
             }
-            return type;
+
+
+
+            return "TRANSACTION";
         }
 
         //Adding new item
@@ -331,6 +342,10 @@ public class Server extends JFrame {
             else itemList.put(nameOfItem, item);
         }
 
+        //Adds to transaction list. Should not be destroyed
+        private void addTransaction(String formatted){
+            transactionsList.put(transactionsList.size(), formatted);
+        }
         private boolean checkLoginInfo(String login, String pass){
             if(checkUsername(login)){
                 if(userAccounts.get(login).getPassword() == pass){
