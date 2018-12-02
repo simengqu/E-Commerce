@@ -33,7 +33,7 @@ public class ClientGUIDB extends JFrame {
 
         // buy/sell
         transactionPanel = new TransactionPanel();
-        mainPanel.setSize(800, 600);
+        mainPanel.setPreferredSize(new Dimension(800, 650));
         add(mainPanel);
 
     }
@@ -46,17 +46,30 @@ public class ClientGUIDB extends JFrame {
 
         private MainPanel(){
 
+            setLayout(new BorderLayout());
+            setBorder(BorderFactory.createEmptyBorder(10,45,10,45));
+
             displayArea = new JTextArea();
             displayArea.setEditable(false);
             displayArea.setPreferredSize(new Dimension(400, 600));
+
+            JPanel buttonArea = new JPanel(new BorderLayout());
+            JPanel buttonUpperArea = new JPanel(new GridLayout(2,1));
+            JPanel emptyArea = new JPanel();
+            emptyArea.setPreferredSize(new Dimension(100,100));
 
             ButtonHandler buttonHandler = new ButtonHandler();
             register.addActionListener(buttonHandler);
             logIn.addActionListener(buttonHandler);
 
+
             add(new JScrollPane(displayArea), BorderLayout.CENTER);
-            add(register);
-            add(logIn);
+            add(buttonArea, BorderLayout.LINE_END);
+
+            buttonArea.add(emptyArea, BorderLayout.CENTER);
+            buttonArea.add(buttonUpperArea, BorderLayout.SOUTH);
+            buttonUpperArea.add(register);
+            buttonUpperArea.add(logIn);
             setVisible(true);
         }
 
@@ -157,23 +170,36 @@ public class ClientGUIDB extends JFrame {
     public class LogInPanel extends JPanel {
         JTextField userName = new JTextField(10);
         JPasswordField password = new JPasswordField(10);
-        JButton logInButton = new JButton("Log in");
+        JButton logInButton = new JButton("        LOG IN         ");
 
         private LogInPanel(){
+
+            setLayout(new BorderLayout(20, 10));
+
+            JPanel topBox = new JPanel();
+            topBox.setLayout(new BoxLayout(topBox, BoxLayout.LINE_AXIS));
+            topBox.setBorder(BorderFactory.createEmptyBorder(40,10,15,10));
 
             JLabel userNameLabel = new JLabel("Enter user name: ");
             userNameLabel.setLabelFor(userName);
             JLabel passwordLabel = new JLabel("Enter password here: ");
             passwordLabel.setLabelFor(password);
 
+            JPanel centerBox = new JPanel(new FlowLayout());
             ButtonHandler buttonHandler = new ButtonHandler();
             logInButton.addActionListener(buttonHandler);
+            logInButton.setSize(200,50);
 
-            add(userNameLabel);
-            add(userName);
-            add(passwordLabel);
-            add(password);
-            add(logInButton);
+            add(topBox, BorderLayout.NORTH);
+            topBox.add(userNameLabel);
+            topBox.add(userName);
+            topBox.add(Box.createRigidArea(new Dimension(15, 30)));
+            topBox.add(passwordLabel);
+            topBox.add(password);
+
+            add(centerBox, BorderLayout.CENTER);
+            centerBox.add(logInButton);
+
             setVisible(false);
         }
 
@@ -200,6 +226,7 @@ public class ClientGUIDB extends JFrame {
             //Frame
             JPanel centerPanel = new JPanel(new GridLayout(2,1));
             centerPanel.setBorder(BorderFactory.createEmptyBorder(30,30,30,30));
+
             JPanel purchasePanel = new JPanel(new GridLayout(5,1));
             JPanel sellPanel = new JPanel(new GridLayout(5,1));
 
@@ -240,6 +267,7 @@ public class ClientGUIDB extends JFrame {
             add(itemBoughtPanel, BorderLayout.NORTH);
             itemBoughtPanel.add(itemBoughtLabel, BorderLayout.NORTH);
             itemBoughtPanel.add(new JScrollPane(itemBoughtArea), BorderLayout.CENTER);
+
             add(centerPanel, BorderLayout.CENTER);
             centerPanel.add(purchasePanel);
             centerPanel.add(sellPanel);
@@ -571,7 +599,7 @@ public class ClientGUIDB extends JFrame {
         ClientGUIDB clientGUIDB = new ClientGUIDB();
         clientGUIDB.displayItems(clientGUIDB.mainPanel.displayArea);
         clientGUIDB.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        clientGUIDB.setSize(800, 700);
+        clientGUIDB.setSize(1200, 700);
         clientGUIDB.pack();
         clientGUIDB.setLocationRelativeTo(null);
         clientGUIDB.setVisible(true);
