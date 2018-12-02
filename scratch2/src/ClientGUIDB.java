@@ -96,6 +96,7 @@ public class ClientGUIDB extends JFrame {
             add(seller);
             add(buyer);
             add(both);
+            setLocationRelativeTo(null);
             setVisible(false);
         }
 
@@ -154,11 +155,11 @@ public class ClientGUIDB extends JFrame {
 
             textArea = new JTextArea();
             textArea.setEditable(false);
-            textArea.setPreferredSize(new Dimension(400, 600));
+            textArea.setPreferredSize(new Dimension(300, 400));
 
             itemBoughtArea = new JTextArea();
             itemBoughtArea.setEditable(false);
-            itemBoughtArea.setPreferredSize(new Dimension(400, 200));
+            itemBoughtArea.setPreferredSize(new Dimension(300, 100));
 
             itemToBuy = new JTextField(20);
             JLabel buyLabel = new JLabel("Enter product to buy");
@@ -328,7 +329,7 @@ public class ClientGUIDB extends JFrame {
 
                 }
 
-                if (e.getSource() == transactionPanel.buyButton){
+                else if (e.getSource() == transactionPanel.buyButton){
 
                     boolean itemInStock = false;
 
@@ -346,7 +347,7 @@ public class ClientGUIDB extends JFrame {
                         description = resultSet.getString("description");
                         price = resultSet.getDouble("price");
                         numItems = resultSet.getInt("numitems");
-                        System.out.println(itemName);
+                        //System.out.println(itemName);
                     }
 
                     // item in the table
@@ -355,6 +356,7 @@ public class ClientGUIDB extends JFrame {
                         transactionPanel.itemBoughtArea.append(itemName + "\n" + description + "\n" +
                                 "in stock: " + numItems + "\nprice: " + String.valueOf(price));
                         itemInStock = false;
+                        buyItem("siqu", itemName, 1);
                     }
                     else{
                         JOptionPane.showMessageDialog(ClientGUIDB.this,
@@ -365,9 +367,7 @@ public class ClientGUIDB extends JFrame {
                 if (e.getSource() == transactionPanel.sellButton){
 
                 }
-            }
-
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 ex.printStackTrace();
             } finally {
                 mySQL.closeConn();
@@ -376,8 +376,55 @@ public class ClientGUIDB extends JFrame {
 
     }
 
-    public class MySQL {
+    public void buyItem(String user, String itemName, int numItems){
 
+        System.out.println(itemName);
+        String sql = "SELECT * FROM engr_class019.item where (itemname = '"+itemName+"')";
+        mySQL.connectToDataBase(sql);
+        String description = "";
+        double price = 0;
+        int itemLeft = 0;
+        boolean found = false;
+
+        try {
+            while (resultSet.next()){
+                if (itemName.toLowerCase().equals(resultSet.getString("itemname").toLowerCase())){
+                    found = true;
+                    itemLeft = resultSet.getInt("numitems");
+                    description = resultSet.getString("description");
+                    price = resultSet.getDouble("price");
+                }
+
+            }
+
+            if (found) {
+                found = false;
+                itemLeft -= numItems;
+                if (itemLeft < 0){
+                    JOptionPane.showMessageDialog(ClientGUIDB.this.transactionPanel,
+                            "Not enough items in stock.");
+                }
+                else{
+                    transactionPanel.itemBoughtArea.setText("");
+                    transactionPanel.itemBoughtArea.append(itemName + "\n" + description + "\n" +
+                            "in stock: " + itemLeft + "\nprice: " + String.valueOf(price));
+                    sql = "update item set numitems="+itemLeft+" where (itemname='"+itemName+"')";
+                    statement.executeUpdate(sql);
+                    displayItems(transactionPanel.itemBoughtArea);
+                }
+            }
+            else {
+                System.out.println("Not found.");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void sellItem(String itemName, int numItems){
+
+    }
+    public class MySQL {
 
         public void connectToDataBase(String sqlStr) {
             try {
@@ -459,7 +506,8 @@ public class ClientGUIDB extends JFrame {
         ClientGUIDB clientGUIDB = new ClientGUIDB();
         clientGUIDB.displayItems(clientGUIDB.mainPanel.displayArea);
         clientGUIDB.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        clientGUIDB.setSize(1000, 800);
+        clientGUIDB.setSize(800, 700);
+        clientGUIDB.setLocationRelativeTo(null);
         clientGUIDB.setVisible(true);
     }
 }
