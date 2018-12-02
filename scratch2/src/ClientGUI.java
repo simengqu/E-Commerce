@@ -2,61 +2,55 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.sql.*;
 
 public class ClientGUI extends JFrame {
 
-    private HashMap<String, User> users;
-    private HashMap<String, Item> items;
+//    private HashMap<String, User> users;
+//    private HashMap<String, Item> items;
     private MainPanel mainPanel;
     private RegisterPanel registerPanel;
     private LogInPanel logInPanel;
     private TransactionPanel transactionPanel;
-    private boolean inTransactionPanel = false;
+    private MySQL mySQL;
+    private Connection connection = null;
+    private Statement statement = null;
+    private String sql;
+    private ResultSet resultSet;
 
     public ClientGUI(){
 
-        users = new HashMap<>();
-        items = new HashMap<>();
-        items.put("MacBook", new Item("MacBook", "MacBook Pro", 1, 1000));
-        items.put("iPad", new Item("iPad", "iPad 12.9", 2, 800));
-        items.put("iPhone", new Item("iPhone", "iPhone XS", 3, 500));
-        items.get("MacBook").addSeller("Apple", 5);
-        items.get("MacBook").addSeller("Amazon", 50);
-        items.get("iPad").addSeller("Apple", 5);
-        items.get("iPad").addSeller("Amazon", 50);
-        items.get("iPhone").addSeller("Apple", 5);
-        items.get("iPhone").addSeller("Amazon", 50);
-
-        User user1 = new User("siqu", "12345", users.size());
-        users.put(user1.getUserName(), user1);
-        User user2 = new User("kevins", "54321", users.size());
-        users.put(user2.getUserName(), user2);
+//        users = new HashMap<>();
+//        items = new HashMap<>();
+//        items.put("MacBook", new Item("MacBook", "MacBook Pro", 1, 1000));
+//        items.put("iPad", new Item("iPad", "iPad 12.9", 2, 800));
+//        items.put("iPhone", new Item("iPhone", "iPhone XS", 3, 500));
+//        items.get("MacBook").addSeller("Apple", 5);
+//        items.get("MacBook").addSeller("Amazon", 50);
+//        items.get("iPad").addSeller("Apple", 5);
+//        items.get("iPad").addSeller("Amazon", 50);
+//        items.get("iPhone").addSeller("Apple", 5);
+//        items.get("iPhone").addSeller("Amazon", 50);
+//
+//        User user1 = new User("siqu", "12345", users.size());
+//        users.put(user1.getUserName(), user1);
+//        User user2 = new User("kevins", "54321", users.size());
+//        users.put(user2.getUserName(), user2);
 
         mainPanel = new MainPanel();
         registerPanel = new RegisterPanel();
         logInPanel = new LogInPanel();
         transactionPanel = new TransactionPanel();
+        mainPanel.setSize(800, 600);
         add(mainPanel);
 
-    }
+        mySQL = new MySQL();
 
-    public HashMap<String, User> getUsers() {
-        return users;
-    }
-
-    public HashMap<String, Item> getItems() {
-        return items;
     }
 
     public class MainPanel extends JPanel {
 
         private JTextArea displayArea;
-        /*private JButton registerAsSeller;
-        private JButton registerAsBuyer;
-        private JButton registerAsBoth;*/
         private JButton register = new JButton("Register");
         private JButton logIn = new JButton("Log in");
 
@@ -64,33 +58,22 @@ public class ClientGUI extends JFrame {
 
             displayArea = new JTextArea();
             displayArea.setEditable(false);
+            displayArea.setPreferredSize(new Dimension(400, 600));
+
             ButtonHandler buttonHandler = new ButtonHandler();
             register.addActionListener(buttonHandler);
             logIn.addActionListener(buttonHandler);
-            /*registerAsSeller = new JButton("Register as a seller");
-            registerAsSeller.addActionListener(buttonHandler);
-            registerAsBuyer = new JButton("Register as a buyer");
-            registerAsBuyer.addActionListener(buttonHandler);
-            registerAsBoth = new JButton("Register as both");
-            registerAsBoth.addActionListener(buttonHandler);*/
 
-            for (Map.Entry<String, Item> entry : items.entrySet()){
-                //displayArea.append(entry.getValue().toString() + "\n");
-                displayArea.append("Product: " + entry.getValue().getItemName() + "\n");
-                displayArea.append("Price: " + entry.getValue().getPrice() + "\n\n");
-            }
+//            for (Map.Entry<String, Item> entry : items.entrySet()){
+//                //displayArea.append(entry.getValue().toString() + "\n");
+//                displayArea.append("Product: " + entry.getValue().getItemName() + "\n");
+//                displayArea.append("Price: " + entry.getValue().getPrice() + "\n\n");
+//            }
 
-            /*JScrollPane jScrollPane = new JScrollPane(displayArea);
-            jScrollPane.setSize(400,500);
-            //jScrollPane.add(displayArea);
-            add(jScrollPane, BorderLayout.CENTER);*/
             add(new JScrollPane(displayArea), BorderLayout.CENTER);
             add(register);
             add(logIn);
             setVisible(true);
-            /*add(registerAsSeller);
-            add(registerAsBuyer);
-            add(registerAsBoth);*/
         }
 
         public JButton getRegister() {
@@ -133,18 +116,6 @@ public class ClientGUI extends JFrame {
             setVisible(false);
         }
 
-        public void register(String userName, String password, int userID){
-
-            if (!users.containsKey(userName)){
-                User newUser = new User(userName, password, userID);
-                users.put(userName, newUser);
-                System.out.println("Registered new user " + newUser + " with password " + password);
-            }
-            else {
-                JOptionPane.showMessageDialog(ClientGUI.this,
-                        "Username has already exist, try another one.");
-            }
-        }
         public JButton getSeller() {
             return seller;
         }
@@ -185,39 +156,67 @@ public class ClientGUI extends JFrame {
             return logInButton;
         }
 
-        public void logIn(String userName, String password){
-
-            if (!users.containsKey(userName)){
-                JOptionPane.showMessageDialog(ClientGUI.this,
-                        "Username has already exist, try another one.");
-            }
-            else {
-                System.out.println("Log in success");
-            }
-        }
     }
 
     public class TransactionPanel extends JPanel {
 
-        ArrayList<JButton> jButtons = new ArrayList<>();
+        JTextField itemToBuy;
+        JTextField itemToSell;
+        JTextArea textArea;
+        JTextArea itemBoughtArea;
+        JButton buyButton;
+        JButton sellButton;
 
         public TransactionPanel() {
 
-            inTransactionPanel = true;
-            setLayout(new FlowLayout());
-            for (Map.Entry<String, Item> entry : items.entrySet()){
+            textArea = new JTextArea();
+            textArea.setEditable(false);
+            textArea.setPreferredSize(new Dimension(400, 600));
 
-                ButtonHandler buttonHandler = new ButtonHandler();
-                JButton temp = new JButton(entry.getValue().getItemName());
-                temp.addActionListener(buttonHandler);
-                jButtons.add(temp);
-                add(temp);
-            }
+            itemBoughtArea = new JTextArea();
+            itemBoughtArea.setEditable(false);
+            itemBoughtArea.setPreferredSize(new Dimension(400, 200));
 
+            itemToBuy = new JTextField(20);
+            JLabel buyLabel = new JLabel("Enter product to buy");
+            buyLabel.setLabelFor(itemToBuy);
+
+            itemToSell = new JTextField(20);
+            JLabel sellLabel = new JLabel("Enter product to sell");
+            sellLabel.setLabelFor(itemToSell);
+
+            ButtonHandler buttonHandler = new ButtonHandler();
+            buyButton = new JButton("Search");
+            buyButton.addActionListener(buttonHandler);
+            sellButton = new JButton("Sell");
+            sellButton.addActionListener(buttonHandler);
+
+            //setLayout(new FlowLayout());
+
+            add(new JScrollPane(textArea), BorderLayout.WEST);
+            add(new JScrollPane(itemBoughtArea), BorderLayout.NORTH);
+            add(buyLabel);
+            add(itemToBuy);
+            add(buyButton);
+            add(sellLabel);
+            add(itemToSell);
+            add(sellButton);
             setVisible(false);
         }
 
+    }
 
+    public void displayItems(JTextArea textArea){
+        String sql = "SELECT * FROM engr_class019.item";
+        mySQL.connectToDataBase(sql);
+        try{
+            while (resultSet.next()){
+
+                textArea.append(resultSet.getString("itemname") + "\n");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public class ButtonHandler implements ActionListener {
@@ -225,98 +224,225 @@ public class ClientGUI extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e){
 
-            if (e.getSource() == mainPanel.getRegister()){
+            try {
+                if (e.getSource() == mainPanel.getRegister()){
 
-                mainPanel.setVisible(false);
-                remove(mainPanel);
-                add(registerPanel);
-                registerPanel.setVisible(true);
+                    mainPanel.setVisible(false);
+                    remove(mainPanel);
+                    add(registerPanel);
+                    registerPanel.setVisible(true);
+                }
+                else if (e.getSource() == mainPanel.getLogIn()){
+
+                    mainPanel.setVisible(false);
+                    remove(mainPanel);
+                    add(logInPanel);
+                    logInPanel.setVisible(true);
+                }
+                else if ( e.getSource() == registerPanel.getSeller() ||
+                        e.getSource() == registerPanel.getBuyer() ||
+                        e.getSource() == registerPanel.getBoth()){
+
+                    boolean registered = false;
+
+                    String username = registerPanel.userName.getText();
+                    String sql = "SELECT * FROM engr_class019.registration where (username = '"+username+"')";
+                    mySQL.connectToDataBase(sql);
+                    String user;
+                    String password = String.valueOf(registerPanel.password.getPassword());
+
+                    while (resultSet.next()){
+                        user = resultSet.getString("username");
+                        if (user.equals(username)){
+                            registered = true;
+                            break;
+                        }
+                    }
+
+                    if (!registered){
+
+                        sql = "insert into " + "registration" + "(username, password) values('"+username+"', '"+password+"')";
+                        statement.executeUpdate(sql);
+                        System.out.println("username: " + username + " password: " + password);
+                    }
+                    else {
+                        JOptionPane.showMessageDialog(ClientGUI.this,
+                                "Username has already been registered, try another one.");
+                    }
+
+                    if (!registered){
+
+                        remove(registerPanel);
+                        registerPanel.setVisible(false);
+                        displayItems(transactionPanel.textArea);
+                        add(transactionPanel);
+                        transactionPanel.setVisible(true);
+                    }
+
+                }
+                else if (e.getSource() == logInPanel.getLogInButton()) {
+
+                    boolean logIn = false;
+
+                    String username = logInPanel.userName.getText();
+                    String password = String.valueOf(logInPanel.password.getPassword());
+                    String sql = "SELECT * FROM engr_class019.registration where (username = '"+username+"')";
+                    mySQL.connectToDataBase(sql);
+                    String user;
+                    String pwd;
+
+                    while (resultSet.next()){
+                        user = resultSet.getString("username");
+                        pwd = resultSet.getString("password");
+                        if (user.equals(username) && password.equals(pwd)){
+                            logIn = true;
+                            break;
+                        }
+                    }
+
+                    if (logIn){
+                        remove(logInPanel);
+                        logInPanel.setVisible(false);
+                        displayItems(transactionPanel.textArea);
+                        add(transactionPanel);
+                        transactionPanel.setVisible(true);
+                        System.out.println("username: " + username + " password: " + password);
+                    }
+                    else {
+                        JOptionPane.showMessageDialog(ClientGUI.this,
+                                "Username not exist/wrong password.");
+                    }
+
+                }
+
+                if (e.getSource() == transactionPanel.buyButton){
+
+                    boolean itemInStock = false;
+
+                    String itemName = transactionPanel.itemToBuy.getText();
+                    String sql = "SELECT * FROM engr_class019.item where (itemname = '"+itemName+"')";
+                    mySQL.connectToDataBase(sql);
+                    String description = "";
+                    int numItems = 0;
+                    double price = 0;
+                    //System.out.println("itemname: "+resultSet.getString("itemname"));
+                    while (resultSet.next()){
+                        itemInStock = true;
+                        itemName = resultSet.getString("itemname");
+                        description = resultSet.getString("description");
+                        price = resultSet.getDouble("price");
+                        numItems = resultSet.getInt("numitems");
+                        System.out.println(itemName);
+                    }
+
+                    if (itemInStock) {
+                        transactionPanel.itemBoughtArea.setText("");
+                        transactionPanel.itemBoughtArea.append(itemName + "\n" + description + "\n" +
+                                "in stock: " + numItems + "\nprice: " + String.valueOf(price));
+                        itemInStock = false;
+                    }
+                    else{
+                        JOptionPane.showMessageDialog(ClientGUI.this,
+                                "Item not found.");
+                    }
+                }
+
+                if (e.getSource() == transactionPanel.sellButton){
+
+                }
             }
-            else if (e.getSource() == mainPanel.getLogIn()){
 
-                mainPanel.setVisible(false);
-                remove(mainPanel);
-                add(logInPanel);
-                logInPanel.setVisible(true);
-            }
-            else if ( e.getSource() == registerPanel.getSeller() ||
-                    e.getSource() == registerPanel.getBuyer() ||
-                    e.getSource() == registerPanel.getBoth()){
-
-                boolean registered = false;
-                /*registerPanel.register(registerPanel.userName.getText(),
-                        registerPanel.password.getPassword().toString(),
-                        users.size());*/
-                if (!users.containsKey(registerPanel.userName.getText())){
-                    User newUser = new User(
-                            registerPanel.userName.getText(),
-                            String.valueOf(registerPanel.password.getPassword()),
-                            users.size()
-                    );
-                    users.put(logInPanel.userName.getText(), newUser);
-                    System.out.println("Registered new user " + logInPanel.userName.getText() + " with password " +
-                            String.valueOf(registerPanel.password.getPassword()));
-                    registered = true;
-                }
-                else {
-                    JOptionPane.showMessageDialog(ClientGUI.this,
-                            "Username has already been registered, try another one.");
-                }
-
-                /*System.out.println("Username: " + registerPanel.userName.getText() +
-                        "\nPassword entered:" + String.valueOf(registerPanel.password.getPassword()) +
-                        "\nCorrect password: " + users.get(registerPanel.userName.getText()).getUserPassword());*/
-
-                if (registered){
-
-                    remove(registerPanel);
-                    registerPanel.setVisible(false);
-                    add(transactionPanel);
-                    transactionPanel.setVisible(true);
-                }
-
-            }
-            else if (e.getSource() == logInPanel.getLogInButton()) {
-
-                boolean logInSuccess = false;
-                boolean exist = users.containsKey(logInPanel.userName.getText());
-                if (!exist){
-                    JOptionPane.showMessageDialog(ClientGUI.this,
-                            "Username doesn't exist.");
-                }
-                else if (!users.get(logInPanel.userName.getText()).getUserPassword().equals(String.valueOf(logInPanel.password.getPassword()))){
-                    JOptionPane.showMessageDialog(ClientGUI.this,
-                            "Wrong password, try again.");
-                }
-                else {
-                    logInSuccess = true;
-                    System.out.println("Log in success");
-                }
-
-                System.out.println("Username: " + logInPanel.userName.getText() +
-                        "\nPassword entered:" + String.valueOf(logInPanel.password.getPassword()) +
-                        "\nCorrect password: " + users.get(logInPanel.userName.getText()).getUserPassword());
-
-                if (logInSuccess){
-                    logInPanel.setVisible(false);
-                    remove(logInPanel);
-                    add(transactionPanel);
-                    transactionPanel.setVisible(true);
-                }
-
-            }
-
-            if (inTransactionPanel){
-
+            catch (Exception ex) {
+                ex.printStackTrace();
+            } finally {
+                mySQL.closeConn();
             }
         }
 
     }
 
+    public class MySQL {
+
+
+        public void connectToDataBase(String sqlStr) {
+            try {
+                // This will load the MySQL driver, each DB has its own driver
+                Class.forName("com.mysql.cj.jdbc.Driver");
+                System.out.println("open connection...");
+                // Setup the connection with the DB
+                connection = DriverManager
+                        .getConnection("jdbc:mysql://s-l112.engr.uiowa.edu:3306/engr_class019","engr_class019", "team19");
+
+
+                // Statements allow to issue SQL queries to the database
+                statement = connection.createStatement();
+                // Result set get the result of the SQL query
+                sql = sqlStr;
+                resultSet = statement.executeQuery(sql);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        public void writeToDataBase(String table) {
+
+            try {
+                // This will load the MySQL driver, each DB has its own driver
+                Class.forName("com.mysql.cj.jdbc.Driver");
+                System.out.println("open connection...");
+                // Setup the connection with the DB
+                connection = DriverManager.getConnection(
+                        "jdbc:mysql://s-l112.engr.uiowa.edu:3306/engr_class019",
+                        "engr_class019",
+                        "team19");
+
+                // Statements allow to issue SQL queries to the database
+                statement = connection.createStatement();
+                // Result set get the result of the SQL query
+                sql = "SELECT * FROM engr_class019." + table;
+                resultSet = statement.executeQuery(sql);
+
+
+                // write to table
+                if (table.equals("registration")) {
+                    String username = registerPanel.userName.getText();
+                    String password = String.valueOf(registerPanel.password.getPassword());
+
+                    sql = "insert into " + table + "(username, password) values('"+username+"', '"+password+"')";
+                    statement.executeUpdate(sql);
+                } else if (table.equals("transactionHistory")) {
+
+                } else if (table.equals("item")) {
+
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                closeConn();
+            }
+        }
+
+        public void closeConn()
+        {
+            try {
+                if(connection!=null)
+                {
+                    connection.close();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public static void main(String args[]){
         ClientGUI clientGUI = new ClientGUI();
+        clientGUI.displayItems(clientGUI.mainPanel.displayArea);
         clientGUI.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        clientGUI.setSize(800, 600);
+        clientGUI.setSize(1000, 800);
         clientGUI.setVisible(true);
     }
 }
