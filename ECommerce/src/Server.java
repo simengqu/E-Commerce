@@ -16,7 +16,7 @@ import java.util.concurrent.Executors;
 public class Server extends JFrame {
     //JUST FOR RECORD KEEPING, REMOVE LATER
     private static final String messageTypes[] = {"MESSAGE","ERROR", "PERMISSION","ACCOUNT",
-                                                  "BUY", "SELL", "MAP", "CLOSE"};
+                                                  "BUY", "SELL", "MAP"};
 
 
     private JTextArea displayArea; // display information to user
@@ -25,17 +25,12 @@ public class Server extends JFrame {
      * Place to store Items. First is item Name
      * TODO: EDIT ITEM LIST TO CONTAIN ITEMS
      */
-    HashMap<String, Integer> itemList = new HashMap<>();
+    HashMap<String, Item> itemList = new HashMap<>();
 
     /**
      * Maintains every user account. First is Username
      */
     HashMap<String, User> userAccounts = new HashMap<>();
-
-    /**
-     * Maintains number of active users at any given time
-     */
-    HashMap<UserType, Integer> activeUsers = new HashMap<>();
 
     //TODO: Transactions list
     HashMap<Integer, String> transactionsList = new HashMap<>();
@@ -53,8 +48,14 @@ public class Server extends JFrame {
      */
     private SockServer connection[];
 
+    /**
+     * Total Number of connections in 1 session
+     */
     private int counter = 1;
 
+    /**
+     * Number of Active clients
+     */
     private int nClientsActive = 0;
 
     //TODO: Make Server to display information, not do much else
@@ -180,7 +181,7 @@ public class Server extends JFrame {
         private void processConnection() throws IOException {
             //TODO: SEND ALL INFORMATION IN CURRENT LIST OF ITEMS TO CLIENT AT CONNECTION START
             String message = "Connection " + myConID + " successful";
-            sendData(message); // send connection successful message
+            sendList("MAP"); // send first list of information
 
             do // process messages sent from client
             {
@@ -188,18 +189,22 @@ public class Server extends JFrame {
                 {
                     String type = (String) input.readObject();
                     //Chooses which type of processes to run and messages to send to client
-                    if(type.equals("PERMISSION")){
+                    if(type.equals("PERMISSION")){ // Requires 3 inputs
                         sendPermission((String) input.readObject(), (String) input.readObject());
                     }
-                    else if(type.equals("ACCOUNT")){
+                    else if(type.equals("ACCOUNT")){ // Requires 4 inputs
                         sendAccount((String) input.readObject(), (String) input.readObject(), (String) input.readObject());
                     }
-                    else if(type.equals("BUY")){
-                        //TODO: SEND UPDATE ON TRANSACTION
-                        type = updateList(type, (String) input.readObject());
+                    else if(type.equals("BUY")){ //Requires 2 inputs
+                        type = updateList((String) input.readObject(), type);
                         sendList(type);
                     }
-                    else message = (String) input.readObject(); // read new message
+                    else if(type.equals("SELL")){ //Requires 2 inputs
+                        Item x = (Item) input.readObject();
+                        updateList(x, x.getItemName(), type);
+                        sendList(type);
+                    }
+                    else message = (String) input.readObject(); // read new message (2 inputs)
 
                     displayMessage("\n" + myConID + message); // display message
                 } // end try
@@ -249,7 +254,7 @@ public class Server extends JFrame {
 
                 }
                 else {
-                    output.writeObject("MESSAGE");
+                    output.writeObject("ERROR");
                     output.writeObject("Incorrect Username/Password");
                 }
                 output.flush();
@@ -257,7 +262,7 @@ public class Server extends JFrame {
 
             }//end try
             catch(IOException ioException){
-                //TODO: SHOW ERROR//
+                displayArea.append("\nError writing object");
             }//end Catch
         }// end method permission
 
@@ -271,10 +276,11 @@ public class Server extends JFrame {
                     output.writeObject("MESSAGE");
                     output.writeObject("Incorrect Username/Password");
                 }
+                output.flush();
 
             }//end try
             catch(IOException ioException){
-                //TODO: SHOW ERROR//
+                displayArea.append("\nError writing object");
             }//end Catch
         }//End sendAccount
 
@@ -284,7 +290,7 @@ public class Server extends JFrame {
                 output.writeObject(type);
                 //Ensure there is no Error in the HashMaps
                 if(type.equals("ERROR")){
-                    output.writeObject("ERROR");
+
                     output.writeObject("That item doesn't exist!");
                 }
                 else {
@@ -293,26 +299,36 @@ public class Server extends JFrame {
                         output.writeObject(i);
                     }
                 }
+                output.flush();
             }
             catch(IOException ioException){
-                //TODO: SHOW ERROR//
+                displayArea.append("\nError writing object");
             }//end Catch
         }
 
         //Removing/Decrementing Item
         private String updateList(String nameOfItem, String type){
             if(itemList.containsKey(nameOfItem)){
-//                if(itemList.get(nameOfItem).getInventory() > 0){
-//                  itemList.get(nameOfItem).decrementInventory();
-//                }
-//                else {itemList.remove(nameOfItem); return "ERROR";
+                if(itemList.get(nameOfItem).getInventory() > 0){
+                  itemList.get(nameOfItem).decrementInventory();
+                }
+                else {
+                    itemList.remove(nameOfItem);
+                    return "ERROR";
+                }
+            }
+            else {
+                return "ERROR";
             }
             return type;
         }
 
         //Adding new item
-        private void updateList(Integer item, String type){
-
+        private void updateList(Item item, String nameOfItem, String type){
+            if(itemList.containsKey(nameOfItem)){
+                itemList.get(nameOfItem).incrementInventory();
+            }
+            else itemList.put(nameOfItem, item);
         }
 
         private boolean checkLoginInfo(String login, String pass){

@@ -5,6 +5,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.sql.*;
 
 public class ClientGUI extends JFrame {
 
@@ -244,6 +245,11 @@ public class ClientGUI extends JFrame {
                     e.getSource() == registerPanel.getBoth()){
 
                 boolean registered = false;
+
+                //TODO: Reimplement to access server information (sendData) --KEVIN
+                //Add SwingUtilities.invokeLater(new Runnable) to make program wait for answer from connection?
+
+
                 /*registerPanel.register(registerPanel.userName.getText(),
                         registerPanel.password.getPassword().toString(),
                         users.size());*/
@@ -279,6 +285,10 @@ public class ClientGUI extends JFrame {
             else if (e.getSource() == logInPanel.getLogInButton()) {
 
                 boolean logInSuccess = false;
+
+                //TODO: Reimplement to access server information  (sendData) --KEVIN
+                //Add SwingUtilities.invokeLater(new Runnable) to make program wait for answer from connection?
+
                 boolean exist = users.containsKey(logInPanel.userName.getText());
                 if (!exist){
                     JOptionPane.showMessageDialog(ClientGUI.this,
