@@ -1,3 +1,4 @@
+import javax.smartcardio.Card;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -79,23 +80,63 @@ public class ClientGUIDB extends JFrame {
 
         private RegisterPanel(){
 
+            setLayout(new GridLayout(5,1, 10, 10)); //KEVIN
+            JPanel topPanel = new JPanel();
+
+            //Top panel look
+            topPanel.setLayout(new GridBagLayout());
+            GridBagConstraints c = new GridBagConstraints();
+
+            //Bot panel look
+            JPanel botPanel = new JPanel();
+            botPanel.setLayout(new BoxLayout(botPanel,BoxLayout.LINE_AXIS));
+            botPanel.setBorder(BorderFactory.createEmptyBorder(10,45,10,45));
+
             JLabel userNameLabel = new JLabel("Enter user name: ");
             userNameLabel.setLabelFor(userName);
             JLabel passwordLabel = new JLabel("Enter password here: ");
             passwordLabel.setLabelFor(password);
 
-            ButtonHandler buttonHandler = new ButtonHandler();
-            seller.addActionListener(buttonHandler);
-            buyer.addActionListener(buttonHandler);
-            both.addActionListener(buttonHandler);
 
-            add(userNameLabel);
-            add(userName);
-            add(passwordLabel);
-            add(password);
-            add(seller);
-            add(buyer);
-            add(both);
+            //Edit buttons
+            ButtonHandler buttonHandler = new ButtonHandler();
+            Dimension buttonSize = new Dimension(150,75);
+            seller.addActionListener(buttonHandler);
+            seller.setMaximumSize(buttonSize);
+            seller.setSize(buttonSize);
+            buyer.addActionListener(buttonHandler);
+            buyer.setMaximumSize(buttonSize);
+            buyer.setSize(buttonSize);
+            both.addActionListener(buttonHandler);
+            both.setMaximumSize(buttonSize);
+            both.setSize(buttonSize);
+
+            //Add panels
+            add(topPanel);
+            add(botPanel);
+
+            //Add topPanel features
+            c.fill = GridBagConstraints.HORIZONTAL;
+            c.gridx = 0; c.gridy = 0; c.insets = new Insets(10, 30, 10, 30); c.weightx = .4;
+            topPanel.add(userNameLabel, c);
+            c.fill = GridBagConstraints.HORIZONTAL;
+            c.gridx = 1; c.gridy = 0;
+            topPanel.add(userName, c);
+            c.fill = GridBagConstraints.HORIZONTAL;
+            c.gridx = 0; c.gridy = 1;
+            topPanel.add(passwordLabel, c);
+            c.fill = GridBagConstraints.HORIZONTAL;
+            c.gridx = 1; c.gridy = 1;
+            topPanel.add(password, c);
+
+            //Add botPanel features
+            botPanel.add(seller);
+            botPanel.add(Box.createRigidArea(new Dimension(15, 0)));
+            botPanel.add(buyer);
+            botPanel.add(Box.createRigidArea(new Dimension(15, 0)));
+            botPanel.add(both);
+            topPanel.setVisible(true);
+            botPanel.setVisible(true);
             setLocationRelativeTo(null);
             setVisible(false);
         }
@@ -153,38 +194,61 @@ public class ClientGUIDB extends JFrame {
 
         public TransactionPanel() {
 
+            setLayout(new BorderLayout(30, 30));
+            setBorder(BorderFactory.createEmptyBorder(30,30,30,30));
+
+            //Frame
+            JPanel centerPanel = new JPanel(new GridLayout(2,1));
+            centerPanel.setBorder(BorderFactory.createEmptyBorder(30,30,30,30));
+            JPanel purchasePanel = new JPanel(new GridLayout(5,1));
+            JPanel sellPanel = new JPanel(new GridLayout(5,1));
+
+            //Purchase List
             textArea = new JTextArea();
             textArea.setEditable(false);
             textArea.setPreferredSize(new Dimension(300, 400));
 
+            //Transaction Panel
+            JPanel itemBoughtPanel = new JPanel(new BorderLayout(0, 5));
+            JLabel itemBoughtLabel = new JLabel("Transaction Information");
             itemBoughtArea = new JTextArea();
             itemBoughtArea.setEditable(false);
             itemBoughtArea.setPreferredSize(new Dimension(300, 100));
 
+            //Buy are
             itemToBuy = new JTextField(20);
             JLabel buyLabel = new JLabel("Enter product to buy");
             buyLabel.setLabelFor(itemToBuy);
+            itemToBuy.setPreferredSize(new Dimension(50, 20));
 
+            //Sell area
             itemToSell = new JTextField(20);
             JLabel sellLabel = new JLabel("Enter product to sell");
             sellLabel.setLabelFor(itemToSell);
+            itemToSell.setPreferredSize(new Dimension(50, 20));
 
+            //Button Handling
             ButtonHandler buttonHandler = new ButtonHandler();
-            buyButton = new JButton("Search");
+            buyButton = new JButton("Purchase");
             buyButton.addActionListener(buttonHandler);
             sellButton = new JButton("Sell");
             sellButton.addActionListener(buttonHandler);
 
-            //setLayout(new FlowLayout());
 
+            //Adding items together
             add(new JScrollPane(textArea), BorderLayout.WEST);
-            add(new JScrollPane(itemBoughtArea), BorderLayout.NORTH);
-            add(buyLabel);
-            add(itemToBuy);
-            add(buyButton);
-            add(sellLabel);
-            add(itemToSell);
-            add(sellButton);
+            add(itemBoughtPanel, BorderLayout.NORTH);
+            itemBoughtPanel.add(itemBoughtLabel, BorderLayout.NORTH);
+            itemBoughtPanel.add(new JScrollPane(itemBoughtArea), BorderLayout.CENTER);
+            add(centerPanel, BorderLayout.CENTER);
+            centerPanel.add(purchasePanel);
+            centerPanel.add(sellPanel);
+            purchasePanel.add(buyLabel);
+            purchasePanel.add(itemToBuy);
+            purchasePanel.add(buyButton);
+            sellPanel.add(sellLabel);
+            sellPanel.add(itemToSell);
+            sellPanel.add(sellButton);
             setVisible(false);
         }
 
@@ -502,11 +566,13 @@ public class ClientGUIDB extends JFrame {
         }
     }
 
+
     public static void main(String args[]){
         ClientGUIDB clientGUIDB = new ClientGUIDB();
         clientGUIDB.displayItems(clientGUIDB.mainPanel.displayArea);
         clientGUIDB.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         clientGUIDB.setSize(800, 700);
+        clientGUIDB.pack();
         clientGUIDB.setLocationRelativeTo(null);
         clientGUIDB.setVisible(true);
     }
