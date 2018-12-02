@@ -16,6 +16,7 @@ public class ClientGUIDB extends JFrame {
     private Statement statement = null;
     private String sql;
     private ResultSet resultSet;
+    private String type = "";
 
     public ClientGUIDB(){
 
@@ -327,23 +328,20 @@ public class ClientGUIDB extends JFrame {
         public void actionPerformed(ActionEvent e){
 
             try {
-                // go to register panel
+                // go to register panel from Main
                 if (e.getSource() == mainPanel.getRegister()){
-
                     // remove main panel, set it invisible, add register panel
-                    mainPanel.setVisible(false);
-                    remove(mainPanel);
-                    add(registerPanel);
-                    registerPanel.setVisible(true);
+                    swapPanel(registerPanel, mainPanel);
+
                 }
+                // go to login from Main
                 else if (e.getSource() == mainPanel.getLogIn()){
 
                     // remove main panel, set it invisible, add log in panel
-                    mainPanel.setVisible(false);
-                    remove(mainPanel);
-                    add(logInPanel);
-                    logInPanel.setVisible(true);
+                    swapPanel(logInPanel, mainPanel);
+
                 }
+                // Logic of Register
                 else if ( e.getSource() == registerPanel.getSeller() ||
                         e.getSource() == registerPanel.getBuyer() ||
                         e.getSource() == registerPanel.getBoth()){
@@ -359,7 +357,7 @@ public class ClientGUIDB extends JFrame {
                     mySQL.connectToDataBase(sql);
                     String user;
                     String password = String.valueOf(registerPanel.password.getPassword());
-                    String type = "";
+                    type = "";
                     if (e.getSource() == registerPanel.getSeller()){
                         type = "seller";
                     }
@@ -395,14 +393,12 @@ public class ClientGUIDB extends JFrame {
                     // remove registerPanel, set it invisible, list items in text area, add transaction panel
                     if (!registered){
 
-                        remove(registerPanel);
-                        registerPanel.setVisible(false);
+                        swapPanel(transactionPanel, registerPanel);
                         displayItems(transactionPanel.textArea);
-                        add(transactionPanel);
-                        transactionPanel.setVisible(true);
                     }
 
                 }
+                //Logic of login
                 else if (e.getSource() == logInPanel.getLogInButton()) {
 
                     boolean logIn = false;
@@ -419,32 +415,34 @@ public class ClientGUIDB extends JFrame {
                         pwd = resultSet.getString("password");
                         // log in success
                         if (user.equals(username) && password.equals(pwd)){
+                            type = resultSet.getString("type");
                             logIn = true;
                             break;
                         }
                     }
 
                     if (logIn){
-                        remove(logInPanel);
-                        logInPanel.setVisible(false);
+                        swapPanel(transactionPanel, logInPanel);
                         displayItems(transactionPanel.textArea);
-                        add(transactionPanel);
-                        transactionPanel.setVisible(true);
                         System.out.println("username: " + username + " password: " + password);
                     }
                     else {
                         JOptionPane.showMessageDialog(ClientGUIDB.this,
-                                "Username not exist/wrong password.");
+                                "Username does not exist/wrong password.");
                     }
 
                 }
-
-                else if (e.getSource() == transactionPanel.buyButton){
+                //Logic of transaction panel
+                else if (e.getSource() == transactionPanel.buyButton || e.getSource() == transactionPanel.sellButton){
 
                     boolean itemInStock = false;
+                    String itemName;
 
                     // in item table, itemname is unique
-                    String itemName = transactionPanel.itemToBuy.getText();
+                    if(e.getSource() == transactionPanel.buyButton) {
+                        itemName = transactionPanel.itemToBuy.getText();
+                    }
+                    else itemName = transactionPanel.itemToSell.getText();
                     String sql = "SELECT * FROM engr_class019.item where (itemname = '"+itemName+"')";
                     mySQL.connectToDataBase(sql);
                     String description = "";
@@ -465,8 +463,10 @@ public class ClientGUIDB extends JFrame {
                         transactionPanel.itemBoughtArea.setText("");
                         transactionPanel.itemBoughtArea.append(itemName + "\n" + description + "\n" +
                                 "in stock: " + numItems + "\nprice: " + String.valueOf(price));
-                        itemInStock = false;
-                        buyItem("siqu", itemName, 1);
+                        if (e.getSource() == transactionPanel.buyButton) {
+                            buyItem(itemName, 1);
+                        }
+                        else if(e.getSource() == transactionPanel.sellButton) sellItem(itemName, 1);
                     }
                     else{
                         JOptionPane.showMessageDialog(ClientGUIDB.this,
@@ -484,9 +484,19 @@ public class ClientGUIDB extends JFrame {
             }
         }
 
+        //Function to swap active panels to change pages
+        private void swapPanel(JPanel addPanel, JPanel removePanel){
+
+            // remove main panel, set it invisible, add register panel
+            removePanel.setVisible(false);
+            remove(removePanel);
+            add(addPanel);
+            addPanel.setVisible(true);
+        }
+
     }
 
-    public void buyItem(String user, String itemName, int numItems){
+    public void buyItem(String itemName, int numItems){
 
         System.out.println(itemName);
         String sql = "SELECT * FROM engr_class019.item where (itemname = '"+itemName+"')";
@@ -496,44 +506,88 @@ public class ClientGUIDB extends JFrame {
         int itemLeft = 0;
         boolean found = false;
 
-        try {
-            while (resultSet.next()){
-                if (itemName.toLowerCase().equals(resultSet.getString("itemname").toLowerCase())){
-                    found = true;
-                    itemLeft = resultSet.getInt("numitems");
-                    description = resultSet.getString("description");
-                    price = resultSet.getDouble("price");
+        //Check if user is allow to purchase this item
+        if(type.equals("buyer") || type.equals("both")) {
+            try {
+                while (resultSet.next()) {
+                    if (itemName.toLowerCase().equals(resultSet.getString("itemname").toLowerCase())) {
+                        found = true;
+                        itemLeft = resultSet.getInt("numitems");
+                        description = resultSet.getString("description");
+                        price = resultSet.getDouble("price");
+                    }
+
                 }
 
-            }
-
-            if (found) {
-                found = false;
-                itemLeft -= numItems;
-                if (itemLeft < 0){
-                    JOptionPane.showMessageDialog(ClientGUIDB.this.transactionPanel,
-                            "Not enough items in stock.");
+                if (found) {
+                    itemLeft -= numItems;
+                    if (itemLeft < 0) {
+                        JOptionPane.showMessageDialog(ClientGUIDB.this.transactionPanel,
+                                "Not enough items in stock.");
+                    } else {
+                        transactionPanel.itemBoughtArea.setText("");
+                        transactionPanel.itemBoughtArea.append(itemName + "\n" + description + "\n" +
+                                "in stock: " + itemLeft + "\nprice: " + String.valueOf(price));
+                        sql = "update item set numitems=" + itemLeft + " where (itemname='" + itemName + "')";
+                        statement.executeUpdate(sql);
+                        displayItems(transactionPanel.itemBoughtArea);
+                    }
+                } else {
+                    System.out.println("Not found.");
                 }
-                else{
-                    transactionPanel.itemBoughtArea.setText("");
-                    transactionPanel.itemBoughtArea.append(itemName + "\n" + description + "\n" +
-                            "in stock: " + itemLeft + "\nprice: " + String.valueOf(price));
-                    sql = "update item set numitems="+itemLeft+" where (itemname='"+itemName+"')";
-                    statement.executeUpdate(sql);
-                    displayItems(transactionPanel.itemBoughtArea);
-                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
-            else {
-                System.out.println("Not found.");
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        }
+        else {
+            JOptionPane.showMessageDialog(ClientGUIDB.this,
+                    "You are not allowed to purchase.");
         }
     }
 
     public void sellItem(String itemName, int numItems){
+        System.out.println(itemName);
+        String sql = "SELECT * FROM engr_class019.item where (itemname = '"+itemName+"')";
+        mySQL.connectToDataBase(sql);
+        String description = "";
+        double price = 0;
+        int itemLeft = 0;
+        boolean found = false;
 
+        //Check if user is allow to purchase this item
+        if(type.equals("seller") || type.equals("both")) {
+            try {
+                while (resultSet.next()) {
+                    if (itemName.toLowerCase().equals(resultSet.getString("itemname").toLowerCase())) {
+                        found = true;
+                        itemLeft = resultSet.getInt("numitems");
+                        description = resultSet.getString("description");
+                        price = resultSet.getDouble("price");
+                    }
+
+                }
+
+                if (found) {
+                    itemLeft += numItems;
+                    transactionPanel.itemBoughtArea.setText("");
+                    transactionPanel.itemBoughtArea.append(itemName + "\n" + description + "\n" +
+                            "in stock: " + itemLeft + "\nprice: " + String.valueOf(price));
+                    sql = "update item set numitems=" + itemLeft + " where (itemname='" + itemName + "')";
+                    statement.executeUpdate(sql);
+                    displayItems(transactionPanel.itemBoughtArea);
+                } else {
+                    System.out.println("Not found.");
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+        else {
+            JOptionPane.showMessageDialog(ClientGUIDB.this,
+                    "You are not allowed to sell items.");
+        }
     }
+
     public class MySQL {
 
         public void connectToDataBase(String sqlStr) {
