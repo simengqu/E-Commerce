@@ -140,11 +140,11 @@ public class Item {
     public String toString(){
         return String.format(
                 "%s: %s%n%s: %s%n%s: %s%n%s: %s%n%s:%n%s",
-                "Product:", this.itemName,
-                "Item ID:", this.itemID,
+                "Product", this.itemName,
+                "Item ID", this.itemID,
                 "Price", this.price,
-                "Description:", this.description,
-                "Available sellers:", this.getSellers()
+                "Description", this.description,
+                "Available sellers", this.getSellers()
         );
     }
 }
