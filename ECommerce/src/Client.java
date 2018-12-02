@@ -7,10 +7,14 @@ import java.net.InetAddress;
 import java.net.Socket;
 
 public class Client {
+    private static final String messageTypes[] = {"MESSAGE","ERROR", "PERMISSION","ACCOUNT",
+            "TRANSACTION","MAP"};
+
+
     private ObjectOutputStream output; // output stream to server
     private ObjectInputStream input; // input stream from server
     private String message = ""; // message from server
-    private Permission permissionType; // Permission level for this particular client
+    private Permission permissionType = new Permission(UserType.NONE); // Permission level for this particular client
     private String chatServer; // host server for this application
     private Socket client; // socket to communicate with server
 
@@ -39,7 +43,7 @@ public class Client {
         displayMessage("Attempting connection\n");
 
         // create Socket to make connection to server
-        client = new Socket(InetAddress.getByName(chatServer), 23555);
+        client = new Socket(InetAddress.getByName(chatServer), 12345);
 
         // display connection information
         displayMessage("Connected to: " +
@@ -65,14 +69,39 @@ public class Client {
         {
             try // read message and display it
             {
-                message = (String) input.readObject(); // read new message
-                displayMessage("\n" + message); // display message
+                //Server needs to send at least 1 message for how to handle the second message
+                String type = (String) input.readObject();
+
+                //Find the type of command to run
+                if(type.equals("PERMISSION")){
+                    permissionType = (Permission) input.readObject();
+                }
+                else if(type.equals("ACCOUNT")){
+                    permissionType = (Permission) input.readObject();
+                }
+                else if(type.equals("TRANSACTION")){
+                    //TODO: UPDATE WINDOW OF ITEMS WHEN A TRANSACTION HAPPENS
+                }
+                else if(type.equals("MAP")){
+                    //TODO: ADD FUNCTIONALITY TO USE THE LIST OF NAMES FROM THE SERVER ON GUI
+                    for(int i = 0; i < input.readInt(); i++){
+                        input.readObject();
+                    }
+                }
+                else if(type.equals("ERROR")){
+                    //TODO: Dialog box :)
+                }
+                else if(type.equals("TERMINATE")) message = "TERMINATE";
+                else {
+                    message = (String) input.readObject(); // read new message
+                    displayMessage("\n" + message); // display message
+                }
             } // end try
             catch (ClassNotFoundException classNotFoundException) {
                 displayMessage("\nUnknown object type received");
             } // end catch
 
-        } while (!message.equals("SERVER>>> TERMINATE"));
+        } while (!message.equals("TERMINATE"));
     } // end method processConnection
 
     // close streams and socket
@@ -93,7 +122,6 @@ public class Client {
     private void sendData(String message) {
         try // send object to server
         {
-            output.writeObject();
             output.writeObject("CLIENT>>> " + message);
             output.flush(); // flush data to output
             displayMessage("\nCLIENT>>> " + message);
@@ -103,6 +131,8 @@ public class Client {
         } // end catch
     } // end method sendData
 
+
+    //TODO: Wait for Simeng to Implement GUI?
     // manipulates displayArea in the event-dispatch thread
     private void displayMessage(final String messageToDisplay) {
         SwingUtilities.invokeLater(

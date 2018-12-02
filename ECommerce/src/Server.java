@@ -1,4 +1,7 @@
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -7,20 +10,30 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
-public class Server {
+public class Server extends JFrame {
+    //JUST FOR RECORD KEEPING, REMOVE LATER
+    private static final String messageTypes[] = {"MESSAGE","ERROR", "PERMISSION","ACCOUNT",
+                                                  "BUY", "SELL", "MAP"};
+
+
+    private JTextArea displayArea; // display information to user
+
     /**
-     * Place to store Items
+     * Place to store Items. First is item Name
+     *
      */
-    HashMap<String, Integer> itemList = new HashMap<>();
+    HashMap<String, Item> itemList = new HashMap<>();
 
     /**
-     * Maintains number of active users at any given time
+     * Maintains every user account. First is Username
      */
-    HashMap<UserType, Integer> activeUsers = new HashMap<>();
+    HashMap<String, User> userAccounts = new HashMap<>();
 
-    //TODO: Transactions list
+    // Transactions list
+    HashMap<Integer, String> transactionsList = new HashMap<>();
 
     /**
      * Runs the client
@@ -35,13 +48,27 @@ public class Server {
      */
     private SockServer connection[];
 
+    /**
+     * Total Number of connections in 1 session
+     */
     private int counter = 1;
 
+    /**
+     * Number of Active clients
+     */
     private int nClientsActive = 0;
 
-
+    //TMake Server to display information, not do much else
     Server(){
+        super("Server");
 
+        connection = new SockServer[10]; // allocate array for up to 100 server threads
+        executor = Executors.newFixedThreadPool(10); // create thread pool
+        displayArea = new JTextArea(); // create displayArea
+        add(new JScrollPane(displayArea), BorderLayout.CENTER);
+
+        setSize(300, 150); // set size of window
+        setVisible(true); // show window
     }
 
     /**
@@ -83,15 +110,14 @@ public class Server {
                 new Runnable() {
                     public void run() // updates displayArea
                     {
+                        displayArea.append(messageToDisplay);
                     } // end method run
                 } // end anonymous inner class
         ); // end call to SwingUtilities.invokeLater
     } // end method displayMessage
 
+    //TODO: Read in file of User Information/Item Information/Transaction History or Maintain Database?
 
-    //TODO: Edit number of active users
-    private void newClient(Socket client){
-    }
 
 
     /* This new Inner Class implements Runnable and objects instantiated from this
@@ -118,7 +144,7 @@ public class Server {
 
                 } // end try
                 catch (EOFException eofException) {
-                    displayMessage("\nServer" + myConID + " terminated connection");
+                    displayMessage("\nServer " + myConID + " terminated connection");
                 } finally {
                     closeConnection(); //  close connection
                 }// end catch
@@ -150,22 +176,42 @@ public class Server {
 
         // process connection with client
         private void processConnection() throws IOException {
+            //Send all information in current list to client to start item window
             String message = "Connection " + myConID + " successful";
-            sendData(message); // send connection successful message
+            sendList("MAP"); // send first list of information
 
             do // process messages sent from client
             {
                 try // read message and display it
                 {
-                    message = (String) input.readObject(); // read new message
+                    String type = (String) input.readObject();
+                    //Chooses which type of processes to run and messages to send to client
+                    if(type.equals("PERMISSION")){ // Requires 3 inputs
+                        sendPermission((String) input.readObject(), (String) input.readObject());
+                    }
+                    else if(type.equals("ACCOUNT")){ // Requires 4 inputs (name, pass, type of user)
+                        sendAccount((String) input.readObject(), (String) input.readObject(), (String) input.readObject());
+                    }
+                    else if(type.equals("BUY")){ //Requires 3 inputs (name of Item, string of stored info)
+                        type = updateList((String) input.readObject(), (String) input.readObject(), type);
+                        sendList(type);
+                    }
+                    else if(type.equals("SELL")){ //Requires 2 inputs, inputs new item into listings
+                        Item x = (Item) input.readObject();
+                        updateList(x, x.getItemName(), type);
+                        sendList("TRANSACTION");
+                    }
+                    else if(type.equals("TERMINATE")) message = "TERMINATE"; //Requires 1 input
+                    else {message = (String) input.readObject(); // read new message (2 inputs)
 
                     displayMessage("\n" + myConID + message); // display message
+                    }
                 } // end try
                 catch (ClassNotFoundException classNotFoundException) {
                     displayMessage("\nUnknown object type received");
                 } // end catch
 
-            } while (!message.equals("CLIENT>>> TERMINATE"));
+            } while (!message.equals("TERMINATE"));
         } // end method processConnection
 
         // close streams and socket
@@ -184,18 +230,133 @@ public class Server {
             } // end catch
         } // end method closeConnection
 
+        //Function to send a message
         private void sendData(String message) {
             try // send object to client
             {
+                //TWO INPUTS AND OUTPUTS
+                output.writeObject("MESSAGE");
                 output.writeObject("SERVER" + myConID + ">>> " + message);
                 output.flush(); // flush output to client
                 displayMessage("\nSERVER" + myConID + ">>> " + message);
             } // end try
             catch (IOException ioException) {
-                //TODO: Show error in display box
+                displayArea.append("\nError writing object");
             } // end catch
         } // end method sendData
 
+        //Function to send the client a level of permission
+        private void sendPermission(String login, String pass){
+            boolean check = checkLoginInfo(login, pass);
+            try{
+                if(check) {
+                    output.writeObject("PERMISSION");
+                    output.writeObject(userAccounts.get(login).getModifier());
+
+                }
+                else {
+                    output.writeObject("ERROR");
+                    output.writeObject("Incorrect Username/Password");
+                }
+                output.flush();
+
+
+            }//end try
+            catch(IOException ioException){
+                displayArea.append("\nError writing object");
+            }//end Catch
+        }// end method permission
+
+        private void sendAccount(String login, String pass, String permission){
+            try{
+                if(!checkUsername(login)){
+                    userAccounts.put(login, new User(permission, login, pass, userAccounts.size()+1));
+                    output.writeObject("ACCOUNT");
+                    output.writeObject(new Permission(permission));
+                } else {
+                    output.writeObject("MESSAGE");
+                    output.writeObject("Incorrect Username/Password");
+                }
+                output.flush();
+
+            }//end try
+            catch(IOException ioException){
+                displayArea.append("\nError writing object");
+            }//end Catch
+        }//End sendAccount
+
+        //Send a whole list to the client to be read
+        private void sendList(String type){
+            try{
+                output.writeObject(type);
+                //Ensure there is no Error in the HashMaps
+                if(type.equals("ERROR")){
+
+                    output.writeObject("That item doesn't exist!");
+                }
+                else {
+                    output.writeInt(itemList.size());
+                    for (String i : itemList.keySet()) {
+                        output.writeObject(i);
+                    }
+                }
+                output.flush();
+            }
+            catch(IOException ioException){
+                displayArea.append("\nError writing object");
+            }//end Catch
+        }
+
+        //Removing/Decrementing Item
+        private String updateList(String nameOfItem, String formattedInformation, String type){
+            if(itemList.containsKey(nameOfItem)){
+                if(itemList.get(nameOfItem).getInventory() > 0){
+                    addTransaction(formattedInformation);
+                    itemList.get(nameOfItem).decrementInventory();
+
+                    //Remove Item if Inventory gone
+                    if(itemList.get(nameOfItem).getInventory() == 0){
+                        itemList.remove(nameOfItem);
+                    }
+                }
+                //Error that shouldn't happen
+                else {
+                    itemList.remove(nameOfItem);
+                    return "ERROR";
+                }
+            }
+            else {
+                return "ERROR";
+            }
+
+
+
+            return "TRANSACTION";
+        }
+
+        //Adding new item
+        private void updateList(Item item, String nameOfItem, String type){
+            if(itemList.containsKey(nameOfItem)){
+                itemList.get(nameOfItem).incrementInventory();
+            }
+            else itemList.put(nameOfItem, item);
+        }
+
+        //Adds to transaction list. Should not be destroyed
+        private void addTransaction(String formatted){
+            transactionsList.put(transactionsList.size(), formatted);
+        }
+        private boolean checkLoginInfo(String login, String pass){
+            if(checkUsername(login)){
+                if(userAccounts.get(login).getPassword() == pass){
+                    return true;
+                }
+            }
+            return false;
+        }
+        private boolean checkUsername(String login){
+            return(userAccounts.containsKey(login));
+        }
 
     } // end class SockServer
 }
