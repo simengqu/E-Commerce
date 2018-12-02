@@ -6,8 +6,6 @@ import java.sql.*;
 
 public class ClientGUIDB extends JFrame {
 
-    //    private HashMap<String, User> users;
-//    private HashMap<String, Item> items;
     private MainPanel mainPanel;
     private RegisterPanel registerPanel;
     private LogInPanel logInPanel;
@@ -20,31 +18,22 @@ public class ClientGUIDB extends JFrame {
 
     public ClientGUIDB(){
 
-//        users = new HashMap<>();
-//        items = new HashMap<>();
-//        items.put("MacBook", new Item("MacBook", "MacBook Pro", 1, 1000));
-//        items.put("iPad", new Item("iPad", "iPad 12.9", 2, 800));
-//        items.put("iPhone", new Item("iPhone", "iPhone XS", 3, 500));
-//        items.get("MacBook").addSeller("Apple", 5);
-//        items.get("MacBook").addSeller("Amazon", 50);
-//        items.get("iPad").addSeller("Apple", 5);
-//        items.get("iPad").addSeller("Amazon", 50);
-//        items.get("iPhone").addSeller("Apple", 5);
-//        items.get("iPhone").addSeller("Amazon", 50);
-//
-//        User user1 = new User("siqu", "12345", users.size());
-//        users.put(user1.getUserName(), user1);
-//        User user2 = new User("kevins", "54321", users.size());
-//        users.put(user2.getUserName(), user2);
+        // database
+        mySQL = new MySQL();
 
+        // main GUI, only display once at the beginning, contains list of items
         mainPanel = new MainPanel();
+
+        // registration, has username and password fields, will check if username is valid
         registerPanel = new RegisterPanel();
+
+        // login, has username and password, will check if valid
         logInPanel = new LogInPanel();
+
+        // buy/sell
         transactionPanel = new TransactionPanel();
         mainPanel.setSize(800, 600);
         add(mainPanel);
-
-        mySQL = new MySQL();
 
     }
 
@@ -63,12 +52,6 @@ public class ClientGUIDB extends JFrame {
             ButtonHandler buttonHandler = new ButtonHandler();
             register.addActionListener(buttonHandler);
             logIn.addActionListener(buttonHandler);
-
-//            for (Map.Entry<String, Item> entry : items.entrySet()){
-//                //displayArea.append(entry.getValue().toString() + "\n");
-//                displayArea.append("Product: " + entry.getValue().getItemName() + "\n");
-//                displayArea.append("Price: " + entry.getValue().getPrice() + "\n\n");
-//            }
 
             add(new JScrollPane(displayArea), BorderLayout.CENTER);
             add(register);
@@ -206,9 +189,17 @@ public class ClientGUIDB extends JFrame {
 
     }
 
+    /**
+     * display items in database in the JTextArea
+     * @param textArea  the text area to append the items
+     */
     public void displayItems(JTextArea textArea){
+
+        // inquiry item table
         String sql = "SELECT * FROM engr_class019.item";
+        // get result set
         mySQL.connectToDataBase(sql);
+        // read table
         try{
             while (resultSet.next()){
 
@@ -225,8 +216,10 @@ public class ClientGUIDB extends JFrame {
         public void actionPerformed(ActionEvent e){
 
             try {
+                // go to register panel
                 if (e.getSource() == mainPanel.getRegister()){
 
+                    // remove main panel, set it invisible, add register panel
                     mainPanel.setVisible(false);
                     remove(mainPanel);
                     add(registerPanel);
@@ -234,6 +227,7 @@ public class ClientGUIDB extends JFrame {
                 }
                 else if (e.getSource() == mainPanel.getLogIn()){
 
+                    // remove main panel, set it invisible, add log in panel
                     mainPanel.setVisible(false);
                     remove(mainPanel);
                     add(logInPanel);
@@ -243,25 +237,42 @@ public class ClientGUIDB extends JFrame {
                         e.getSource() == registerPanel.getBuyer() ||
                         e.getSource() == registerPanel.getBoth()){
 
+                    // register new user
                     boolean registered = false;
 
+                    // get input user name
                     String username = registerPanel.userName.getText();
+
+                    // inquiry database
                     String sql = "SELECT * FROM engr_class019.registration where (username = '"+username+"')";
                     mySQL.connectToDataBase(sql);
                     String user;
                     String password = String.valueOf(registerPanel.password.getPassword());
+                    String type = "";
+                    if (e.getSource() == registerPanel.getSeller()){
+                        type = "seller";
+                    }
+                    else if (e.getSource() == registerPanel.getBuyer()){
+                        type = "buyer";
+                    }
+                    else if (e.getSource() == registerPanel.getBoth()){
+                        type = "both";
+                    }
 
                     while (resultSet.next()){
                         user = resultSet.getString("username");
+                        // user exists
                         if (user.equals(username)){
                             registered = true;
                             break;
                         }
                     }
 
+                    // username valid
                     if (!registered){
 
-                        sql = "insert into " + "registration" + "(username, password) values('"+username+"', '"+password+"')";
+                        sql = "insert into registration" +
+                                "(username, password, type) values('"+username+"', '"+password+"', '"+type+"')";
                         statement.executeUpdate(sql);
                         System.out.println("username: " + username + " password: " + password);
                     }
@@ -270,6 +281,7 @@ public class ClientGUIDB extends JFrame {
                                 "Username has already been registered, try another one.");
                     }
 
+                    // remove registerPanel, set it invisible, list items in text area, add transaction panel
                     if (!registered){
 
                         remove(registerPanel);
@@ -294,6 +306,7 @@ public class ClientGUIDB extends JFrame {
                     while (resultSet.next()){
                         user = resultSet.getString("username");
                         pwd = resultSet.getString("password");
+                        // log in success
                         if (user.equals(username) && password.equals(pwd)){
                             logIn = true;
                             break;
@@ -319,13 +332,14 @@ public class ClientGUIDB extends JFrame {
 
                     boolean itemInStock = false;
 
+                    // in item table, itemname is unique
                     String itemName = transactionPanel.itemToBuy.getText();
                     String sql = "SELECT * FROM engr_class019.item where (itemname = '"+itemName+"')";
                     mySQL.connectToDataBase(sql);
                     String description = "";
                     int numItems = 0;
                     double price = 0;
-                    //System.out.println("itemname: "+resultSet.getString("itemname"));
+
                     while (resultSet.next()){
                         itemInStock = true;
                         itemName = resultSet.getString("itemname");
@@ -335,6 +349,7 @@ public class ClientGUIDB extends JFrame {
                         System.out.println(itemName);
                     }
 
+                    // item in the table
                     if (itemInStock) {
                         transactionPanel.itemBoughtArea.setText("");
                         transactionPanel.itemBoughtArea.append(itemName + "\n" + description + "\n" +
@@ -370,9 +385,10 @@ public class ClientGUIDB extends JFrame {
                 Class.forName("com.mysql.cj.jdbc.Driver");
                 System.out.println("open connection...");
                 // Setup the connection with the DB
-                connection = DriverManager
-                        .getConnection("jdbc:mysql://s-l112.engr.uiowa.edu:3306/engr_class019","engr_class019", "team19");
-
+                connection = DriverManager.getConnection(
+                        "jdbc:mysql://s-l112.engr.uiowa.edu:3306/engr_class019",
+                        "engr_class019",
+                        "team19");
 
                 // Statements allow to issue SQL queries to the database
                 statement = connection.createStatement();
@@ -386,6 +402,7 @@ public class ClientGUIDB extends JFrame {
 
         }
 
+        // not in user for now
         public void writeToDataBase(String table) {
 
             try {
