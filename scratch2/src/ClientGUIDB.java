@@ -56,18 +56,20 @@ public class ClientGUIDB extends JFrame {
             JPanel buttonArea = new JPanel(new BorderLayout());
             JPanel buttonUpperArea = new JPanel(new GridLayout(2,1));
             JPanel emptyArea = new JPanel();
-            emptyArea.setPreferredSize(new Dimension(100,100));
+            emptyArea.setPreferredSize(new Dimension(200,50));
 
             ButtonHandler buttonHandler = new ButtonHandler();
             register.addActionListener(buttonHandler);
             logIn.addActionListener(buttonHandler);
 
 
+            add(new JLabel("Welcome to The AmazonZ v0.1"), BorderLayout.NORTH);
             add(new JScrollPane(displayArea), BorderLayout.CENTER);
             add(buttonArea, BorderLayout.LINE_END);
 
+
             buttonArea.add(emptyArea, BorderLayout.CENTER);
-            buttonArea.add(buttonUpperArea, BorderLayout.SOUTH);
+            buttonArea.add(buttonUpperArea, BorderLayout.NORTH);
             buttonUpperArea.add(register);
             buttonUpperArea.add(logIn);
             setVisible(true);
@@ -94,9 +96,10 @@ public class ClientGUIDB extends JFrame {
         private RegisterPanel(){
 
             setLayout(new GridLayout(5,1, 10, 10)); //KEVIN
-            JPanel topPanel = new JPanel();
-
             //Top panel look
+            JPanel topPanel = new JPanel();
+            JPanel topBox = new JPanel();
+            topBox.setLayout(new BoxLayout(topBox, BoxLayout.LINE_AXIS));
             topPanel.setLayout(new GridBagLayout());
             GridBagConstraints c = new GridBagConstraints();
 
@@ -104,6 +107,7 @@ public class ClientGUIDB extends JFrame {
             JPanel botPanel = new JPanel();
             botPanel.setLayout(new BoxLayout(botPanel,BoxLayout.LINE_AXIS));
             botPanel.setBorder(BorderFactory.createEmptyBorder(10,45,10,45));
+            botPanel.setMaximumSize(new Dimension(300, 50));
 
             JLabel userNameLabel = new JLabel("Enter user name: ");
             userNameLabel.setLabelFor(userName);
@@ -113,41 +117,55 @@ public class ClientGUIDB extends JFrame {
 
             //Edit buttons
             ButtonHandler buttonHandler = new ButtonHandler();
-            Dimension buttonSize = new Dimension(150,75);
+            Dimension buttonSize = new Dimension(150,50);
             seller.addActionListener(buttonHandler);
             seller.setMaximumSize(buttonSize);
-            seller.setSize(buttonSize);
+            seller.setPreferredSize(buttonSize);
             buyer.addActionListener(buttonHandler);
             buyer.setMaximumSize(buttonSize);
-            buyer.setSize(buttonSize);
+            buyer.setPreferredSize(buttonSize);
             both.addActionListener(buttonHandler);
             both.setMaximumSize(buttonSize);
-            both.setSize(buttonSize);
+            both.setPreferredSize(buttonSize);
 
             //Add panels
-            add(topPanel);
+            add(topBox);
             add(botPanel);
+
+            //Add topBox features
+            topBox.add(Box.createHorizontalGlue());
+            topBox.add(topPanel);
+            topBox.add(Box.createHorizontalGlue());
 
             //Add topPanel features
             c.fill = GridBagConstraints.HORIZONTAL;
-            c.gridx = 0; c.gridy = 0; c.insets = new Insets(10, 30, 10, 30); c.weightx = .4;
+            c.gridx = 0; c.gridy = 0; c.insets = new Insets(30, 80, 10, 0); c.weightx = .3;
             topPanel.add(userNameLabel, c);
+
             c.fill = GridBagConstraints.HORIZONTAL;
-            c.gridx = 1; c.gridy = 0;
+            c.gridx = 1; c.gridy = 0; c.insets = new Insets(30, 0, 10, 80); c.weightx = 0.7;
+            c.ipady = 15;
             topPanel.add(userName, c);
+
             c.fill = GridBagConstraints.HORIZONTAL;
-            c.gridx = 0; c.gridy = 1;
+            c.gridx = 0; c.gridy = 1; c.insets = new Insets(10, 80, 10, 0); c.weightx = .3;
+            c.ipady = 0;
             topPanel.add(passwordLabel, c);
+
             c.fill = GridBagConstraints.HORIZONTAL;
-            c.gridx = 1; c.gridy = 1;
+            c.gridx = 1; c.gridy = 1; c.insets = new Insets(10, 0, 10, 80); c.weightx = 0.7;
+            c.ipady = 15;
             topPanel.add(password, c);
 
             //Add botPanel features
+            botPanel.add(Box.createHorizontalGlue());
             botPanel.add(seller);
-            botPanel.add(Box.createRigidArea(new Dimension(15, 0)));
+            botPanel.add(Box.createRigidArea(new Dimension(15, 30)));
             botPanel.add(buyer);
-            botPanel.add(Box.createRigidArea(new Dimension(15, 0)));
+            botPanel.add(Box.createRigidArea(new Dimension(15, 30)));
             botPanel.add(both);
+            botPanel.add(Box.createHorizontalGlue());
+
             topPanel.setVisible(true);
             botPanel.setVisible(true);
             setLocationRelativeTo(null);
