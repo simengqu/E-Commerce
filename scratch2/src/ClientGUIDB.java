@@ -2,6 +2,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.sql.*;
 import java.util.HashMap;
 
@@ -18,7 +20,7 @@ public class ClientGUIDB extends JFrame {
     private String sql;
     private ResultSet resultSet;
     private String type = "";
-    private String username = "";
+    private String username = "~~~";
     private HashMap<String, Integer> cartList = new HashMap<>();
 
     public ClientGUIDB(){
@@ -365,13 +367,16 @@ public class ClientGUIDB extends JFrame {
             //Create all Panels and setup layout
             setLayout(new BorderLayout(20,20));
             JPanel centerPanel = new JPanel(new GridLayout(4,2));
+            centerPanel.setPreferredSize(new Dimension(600,400));
             JPanel southPanel = new JPanel();
             southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.LINE_AXIS));
             add(centerPanel, BorderLayout.CENTER);
             add(southPanel, BorderLayout.SOUTH);
 
+
             //Create text area
             nameArea = new JTextArea();
+            nameArea.setEditable(false);
             descriptionField = new JTextField();
             priceField = new JTextField();
             unitField = new JTextField();
@@ -474,9 +479,15 @@ public class ClientGUIDB extends JFrame {
                     // username valid
                     if (!registered){
 
-                        sql = "insert into registration" +
-                                "(username, password, type) values('"+username+"', '"+password+"', '"+type+"')";
-                        statement.executeUpdate(sql);
+                        //TODO: TEST
+                        try {
+                            sql = "insert into registration" +
+                                    "(username, password, type, connection) " +
+                                    "values('" + username + "', '" + password + "', '" + type + "', 'yes')";
+                            statement.executeUpdate(sql);
+                        }
+                        catch (Exception ex){ex.printStackTrace();}
+
                         System.out.println("username: " + username + " password: " + password);
                     }
                     else {
@@ -509,7 +520,6 @@ public class ClientGUIDB extends JFrame {
                         pwd = resultSet.getString("password");
                         // log in success
                         if (user.equals(username) && password.equals(pwd)){
-
                             type = resultSet.getString("type");
                             logIn = true;
                             break;
@@ -519,6 +529,12 @@ public class ClientGUIDB extends JFrame {
                     if (logIn){
                         swapPanel(transactionPanel, logInPanel);
                         displayItems(transactionPanel.textArea);
+                        try {
+                            sql = "update registration set connection='yes' where (username='" + username + "')";
+                            statement.executeUpdate(sql);
+                        }
+                        catch (Exception ex){ex.printStackTrace();}
+
                         System.out.println("username: " + username + " password: " + password);
                     }
                     else {
@@ -564,9 +580,9 @@ public class ClientGUIDB extends JFrame {
                         transactionPanel.itemBoughtArea.append(itemName + "\n" + description + "\n" +
                                 "in stock: " + numItems + "\nprice: " + String.valueOf(price));
 
-                        if(e.getSource() == transactionPanel.sellButton) sellItem(itemName, 1);
-                        else if(e.getSource() == transactionPanel.addToCart) updateCart(itemName, price);
+                        if(e.getSource() == transactionPanel.addToCart) updateCart(itemName, price);
                     }
+                    if(e.getSource() == transactionPanel.sellButton) sellItem(itemName, 1);
                     else{
                         JOptionPane.showMessageDialog(ClientGUIDB.this,
                                 "Item not found.");
@@ -574,9 +590,10 @@ public class ClientGUIDB extends JFrame {
                 }
                 else if(e.getSource() == transactionPanel.buyButton){ buyItemsInCart(); }
                 else if(e.getSource() == transactionPanel.logoutButton) logoutUser();
-
-                if (e.getSource() == transactionPanel.sellButton){
-
+                else if (e.getSource() == sellPanel.addItem){
+                        addItemToSell();
+                        swapPanel(transactionPanel, sellPanel);
+                        displayItems(transactionPanel.textArea);
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -585,26 +602,40 @@ public class ClientGUIDB extends JFrame {
             }
         }
 
-        //Function to swap active panels to change pages
-        private void swapPanel(JPanel addPanel, JPanel removePanel){
-            // remove main panel, set it invisible, add register panel
-            removePanel.setVisible(false);
-            remove(removePanel);
-            add(addPanel);
-            addPanel.setVisible(true);
+        //Checks that the fields don't have words
+        private boolean checkFieldsSell(){
+            return !(sellPanel.unitField.getText().matches("\\w+")
+                    || sellPanel.priceField.getText().matches("\\w+"));
         }
 
-        //Swaps client back to main panel, resets their permission, and resets cart
-        private void logoutUser(){
-            type = "";
-            username = "";
-            cartList.clear();
-            transactionPanel.cartArea.setText("");
-            swapPanel(mainPanel, transactionPanel);
-        }
+
 
     }
 
+    //Swaps client back to main panel, disconnects user, resets their permission, and resets cart
+    private void logoutUser(){
+        String sql = "SELECT * FROM engr_class019.registration where (username = '"+username+"')";
+        mySQL.connectToDataBase(sql);
+        try {
+            sql = "update registration set connection='no' where (username='" + username + "')";
+            statement.executeUpdate(sql);
+        }
+        catch (Exception ex){ex.printStackTrace();}
+        type = "";
+        username = "";
+        cartList.clear();
+        transactionPanel.cartArea.setText("");
+        swapPanel(mainPanel, transactionPanel);
+    }
+
+    //Function to swap active panels to change pages
+    private void swapPanel(JPanel addPanel, JPanel removePanel){
+        // remove main panel, set it invisible, add register panel
+        removePanel.setVisible(false);
+        remove(removePanel);
+        add(addPanel);
+        addPanel.setVisible(true);
+    }
 
     //Update the cartList and the displayed cart
     public void updateCart(String itemName, double price){
@@ -629,7 +660,6 @@ public class ClientGUIDB extends JFrame {
                     "You are not allowed to purchase.");
         }
     }
-
 
     //Purchases all items in the cart
     public void buyItemsInCart(){
@@ -703,6 +733,7 @@ public class ClientGUIDB extends JFrame {
 
     }
 
+    //Increments or adds item to database
     public void sellItem(String itemName, int numItems){
         System.out.println(itemName);
         String sql = "SELECT * FROM engr_class019.item where (itemname = '"+itemName+"')";
@@ -730,11 +761,13 @@ public class ClientGUIDB extends JFrame {
                     transactionPanel.itemBoughtArea.setText("");
                     transactionPanel.itemBoughtArea.append(itemName + "\n" + description + "\n" +
                             "in stock: " + itemLeft + "\nprice: " + String.valueOf(price));
+
                     sql = "update item set numitems=" + itemLeft + " where (itemname='" + itemName + "')";
                     statement.executeUpdate(sql);
-                    displayItems(transactionPanel.itemBoughtArea);
+
                 } else {
-                    System.out.println("Not found.");
+                    swapPanel(sellPanel, transactionPanel);
+                    sellPanel.nameArea.setText(itemName);
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -744,6 +777,28 @@ public class ClientGUIDB extends JFrame {
             JOptionPane.showMessageDialog(ClientGUIDB.this,
                     "You are not allowed to sell items.");
         }
+    }
+
+    //Adds an item to the database
+    private void addItemToSell(){
+        String name = sellPanel.nameArea.getText();
+        String description = sellPanel.descriptionField.getText();
+        Double price = Double.parseDouble(sellPanel.priceField.getText());
+        Integer units = Integer.parseInt(sellPanel.unitField.getText());
+        String sql;
+
+        //TODO: FIX
+        try {
+            sql = "INSERT INTO transactionHistory VALUES ('" + username + "', '" + name + "'," +
+                    " '" + units + "', '" + price + "', '" + "seller" + "')";
+            statement.executeUpdate(sql);
+
+            sql = "INSERT INTO item VALUES ('" + name + "', '" + description + "'," +
+                    " '" + units + "', '" + price + "')";
+            statement.executeUpdate(sql);
+        }
+        catch (SQLException e){e.printStackTrace();}
+
     }
 
     public class MySQL {
@@ -827,11 +882,21 @@ public class ClientGUIDB extends JFrame {
 
     public static void main(String args[]){
         ClientGUIDB clientGUIDB = new ClientGUIDB();
-//REMOVE        clientGUIDB.displayItems(clientGUIDB.mainPanel.displayArea);
         clientGUIDB.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         clientGUIDB.setSize(1200, 700);
         clientGUIDB.pack();
         clientGUIDB.setLocationRelativeTo(null);
         clientGUIDB.setVisible(true);
+        //Disconnects the user if they close window
+        clientGUIDB.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                super.windowClosing(e);
+                if(!clientGUIDB.username.equals("~~~")) {
+                    clientGUIDB.logoutUser();
+                    clientGUIDB.mySQL.closeConn();
+                }
+            }
+        });
     }
 }
