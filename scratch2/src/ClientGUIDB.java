@@ -581,6 +581,7 @@ public class ClientGUIDB extends JFrame {
                 }
                 else if (e.getSource() == transactionPanel.clearCart) {
                     transactionPanel.cartArea.setText("");
+                    cartList.clear();
                 }
                 //Logic of transaction panel
                 else if (e.getSource() == transactionPanel.searchButton || e.getSource() == transactionPanel.sellButton
@@ -629,20 +630,47 @@ public class ClientGUIDB extends JFrame {
                         }
                     }
 
-                    if(e.getSource() == transactionPanel.sellButton) sellItem(itemName, 1);
+                    if(e.getSource() == transactionPanel.sellButton) {
+                        sellItem(itemName, 1);
+                    }
 
                 }
                 else if(e.getSource() == transactionPanel.buyButton){
-                    //stringBuilder.append("You bought:\n");
+
+                    stringBuilder.append("You bought:\n");
                     buyItemsInCart();
                     if (purchased){
                         JOptionPane.showMessageDialog(ClientGUIDB.this.transactionPanel,
                                 stringBuilder.toString());
 
+                        transactionPanel.itemBoughtArea.setText("");
+                        String sql = "SELECT * FROM engr_class019.transactionHistory where (username = '"+username+"')";
+                        mySQL.connectToDataBase(sql);
+                        resultSet = statement.executeQuery(sql);
+
+                        String user = "";
+                        String item = "";
+                        int numItems = 0;
+                        double price = 0;
+
+                        while (resultSet.next()){
+
+                            user = resultSet.getString("username");
+                            item = resultSet.getString("item");
+                            numItems = resultSet.getInt("numitems");
+                            price = resultSet.getDouble("price");
+                            String type = resultSet.getString("type");
+
+                            if (type.equals("buy")) {
+                                transactionPanel.itemBoughtArea.append(user + " bought " + numItems + " " + item + " at a price of " + price + "\n");
+                            }
+                        }
+
                     }
-                    //System.out.println(stringBuilder.toString());
+
                     purchased = false;
                     stringBuilder.setLength(0);
+
                 }
                 else if(e.getSource() == transactionPanel.logoutButton) logoutUser();
                 else if (e.getSource() == sellPanel.addItem){
@@ -653,6 +681,7 @@ public class ClientGUIDB extends JFrame {
                     sellPanel.unitField.setText("");
                     sellPanel.descriptionField.setText("");
                 }
+
             } catch (Exception ex) {
                 ex.printStackTrace();
             } finally {
@@ -741,6 +770,7 @@ public class ClientGUIDB extends JFrame {
                 //Handles exception caused by connectToDataBase()
                 try {
 
+                    double totalPrice = 0;
                     for (String currentItem : cartList.keySet()) {
                         String sql = "SELECT * FROM engr_class019.item where (itemname = '" + currentItem + "')";
                         mySQL.connectToDataBase(sql);
@@ -752,8 +782,7 @@ public class ClientGUIDB extends JFrame {
                                 found = true;
                                 itemLeft = resultSet.getInt("numitems");
                                 price = resultSet.getDouble("price");
-                                stringBuilder.append(currentItem + ": $" + price + "\n");
-                                System.out.println(stringBuilder.toString());
+
                             }
 
                         }
@@ -775,6 +804,9 @@ public class ClientGUIDB extends JFrame {
                                 statement.executeUpdate(sql);
 
                                 purchased = true;
+                                stringBuilder.append(transactionItem + " " + currentItem + ": $" + price +
+                                        "; total price: " + price*transactionItem +"\n");
+                                totalPrice += price*transactionItem;
                             }
 
                         }
@@ -782,6 +814,7 @@ public class ClientGUIDB extends JFrame {
 
                     }
 
+                    stringBuilder.append("Total Price: " + totalPrice);
                     //Clear cart after purchasing
                     cartList.clear();
                     transactionPanel.cartArea.setText("");
@@ -798,6 +831,7 @@ public class ClientGUIDB extends JFrame {
                     "You are not allowed to purchase.");
         }
 
+        System.out.println(stringBuilder.toString());
 
     }
 
@@ -834,9 +868,56 @@ public class ClientGUIDB extends JFrame {
                     sql = "update item set numitems=" + itemLeft + " where (itemname='" + itemName + "')";
                     statement.executeUpdate(sql);
 
+                    // transaction
+                    sql = "INSERT INTO transactionHistory VALUES ('"+username+"', '"+itemName+"'," +
+                            " '"+"1"+"', '"+price+"', '"+"sell"+"')";
+                    statement.executeUpdate(sql);
+
+                    transactionPanel.itemBoughtArea.setText("");
+                    sql = "SELECT * FROM engr_class019.transactionHistory where (username = '"+username+"')";
+                    mySQL.connectToDataBase(sql);
+                    resultSet = statement.executeQuery(sql);
+
+                    String user = "";
+                    String item = "";
+
+                    while (resultSet.next()){
+
+                        String type = resultSet.getString("type");
+                        user = resultSet.getString("username");
+                        item = resultSet.getString("item");
+                        numItems = resultSet.getInt("numitems");
+                        price = resultSet.getDouble("price");
+
+                        if (type.equals("sell")) {
+                            transactionPanel.itemBoughtArea.append(user + " sold " + numItems + " " + item + " at a price of " + price + "\n");
+                        }
+                    }
+
                 } else {
                     swapPanel(sellPanel, transactionPanel);
                     sellPanel.nameArea.setText(itemName);
+                }
+
+                transactionPanel.itemBoughtArea.setText("");
+                sql = "SELECT * FROM engr_class019.transactionHistory where (username = '"+username+"')";
+                mySQL.connectToDataBase(sql);
+                resultSet = statement.executeQuery(sql);
+
+                String user = "";
+                String item = "";
+
+                while (resultSet.next()){
+
+                    user = resultSet.getString("username");
+                    item = resultSet.getString("item");
+                    numItems = resultSet.getInt("numitems");
+                    price = resultSet.getDouble("price");
+                    String type = resultSet.getString("type");
+
+                    if (type.equals("sell")) {
+                        transactionPanel.itemBoughtArea.append(user + " sold " + numItems + " " + item + " at a price of " + price + "\n");
+                    }
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -858,7 +939,6 @@ public class ClientGUIDB extends JFrame {
         Integer units = Integer.parseInt(sellPanel.unitField.getText());
         String sql;
 
-        //TODO: FIX
         try {
             sql = "INSERT INTO transactionHistory VALUES ('" + username + "', '" + itemName + "'," +
                     " '" + units + "', '" + price + "', '" + "sell" + "')";
@@ -872,6 +952,27 @@ public class ClientGUIDB extends JFrame {
                     "'" + price + "')";
             mySQL.connectToDataBase(sql);
             statement.executeUpdate(sql);
+
+            // transaction
+            transactionPanel.itemBoughtArea.setText("");
+            sql = "SELECT * FROM engr_class019.transactionHistory where (username = '"+username+"')";
+            mySQL.connectToDataBase(sql);
+            resultSet = statement.executeQuery(sql);
+
+            String user = "";
+            String item = "";
+
+            while (resultSet.next()){
+
+                String type = resultSet.getString("type");
+                user = resultSet.getString("username");
+                item = resultSet.getString("item");
+                price = resultSet.getDouble("price");
+
+                if (type.equals("sell")) {
+                    transactionPanel.itemBoughtArea.append(user + " sold " + units + " " + item + " at a price of " + price + "\n");
+                }
+            }
         }
         catch (SQLException e){e.printStackTrace();}
         finally {
