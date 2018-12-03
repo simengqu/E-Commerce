@@ -154,6 +154,7 @@ public class ServerGUIDB extends JFrame {
 
             try {
 
+                // display transaction history
                 if (e.getSource() == showHistory){
 
                     displayLabel.setText("Transaction History");
@@ -180,6 +181,7 @@ public class ServerGUIDB extends JFrame {
                     }
 
                 }
+                // display buy/sell history
                 else if (e.getSource() == buyHistory || e.getSource() == sellHistory){
 
                     displayArea.setText("");
@@ -226,6 +228,7 @@ public class ServerGUIDB extends JFrame {
                     }
 
                 }
+                // search if transaction of user exists
                 else if (e.getSource() == searchUser){
 
                     String userInput = userField.getText();
@@ -301,6 +304,7 @@ public class ServerGUIDB extends JFrame {
                     }
 
                 }
+                // show current inventory
                 else if (e.getSource() == inventory){
 
                     displayLabel.setText("Inventory");
@@ -325,6 +329,7 @@ public class ServerGUIDB extends JFrame {
                     }
 
                 }
+                // show clients connected
                 else if (e.getSource() == showClients){
 
                     sellerArea.setText("");
@@ -367,6 +372,9 @@ public class ServerGUIDB extends JFrame {
         }
     }
 
+    /*
+        connect to database
+     */
     private class MySQL {
 
         public void connectToDataBase(String sqlStr) {
@@ -404,11 +412,4 @@ public class ServerGUIDB extends JFrame {
     }
 
 
-    public static void main(String args[]){
-        ServerGUIDB serverGUIDB = new ServerGUIDB();
-        serverGUIDB.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        serverGUIDB.setSize(1200, 700);
-        serverGUIDB.setLocationRelativeTo(null);
-        serverGUIDB.setVisible(true);
-    }
 }

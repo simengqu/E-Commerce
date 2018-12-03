@@ -700,7 +700,7 @@ public class ClientGUIDB extends JFrame {
     }
 
     //Swaps client back to main panel, disconnects user, resets their permission, and resets cart
-    private void logoutUser(){
+    public void logoutUser(){
         try {
             String sql = "update registration set connection='no' where (username='" + username + "')";
             mySQL.connectToDataBase(sql);
@@ -1020,25 +1020,11 @@ public class ClientGUIDB extends JFrame {
     }
 
 
-    public static void main(String args[]){
+    public String getUsername() {
+        return username;
+    }
 
-        ClientGUIDB clientGUIDB = new ClientGUIDB();
-
-        clientGUIDB.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        clientGUIDB.setSize(1200, 700);
-        clientGUIDB.pack();
-        clientGUIDB.setLocationRelativeTo(null);
-        clientGUIDB.setVisible(true);
-        //Disconnects the user if they close window
-        clientGUIDB.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                super.windowClosing(e);
-                if(!clientGUIDB.username.equals("~~~")) {
-                    clientGUIDB.logoutUser();
-                    clientGUIDB.mySQL.closeConn();
-                }
-            }
-        });
+    public MySQL getMySQL() {
+        return mySQL;
     }
 }
