@@ -261,6 +261,7 @@ public class ClientGUIDB extends JFrame {
         JButton sellButton;
         JButton addToCart;
         JButton logoutButton;
+        JButton clearCart;
 
         public TransactionPanel() {
 
@@ -322,6 +323,8 @@ public class ClientGUIDB extends JFrame {
             sellButton.addActionListener(buttonHandler);
             addToCart = new JButton("Add To Cart");
             addToCart.addActionListener(buttonHandler);
+            clearCart = new JButton("Clear Cart");
+            clearCart.addActionListener(buttonHandler);
             logoutButton = new JButton("LOGOUT");
             logoutButton.addActionListener(buttonHandler);
 
@@ -353,6 +356,7 @@ public class ClientGUIDB extends JFrame {
             purchasePanel.add(buyButton);
             buyButtonPanel.add(searchButton);
             buyButtonPanel.add(addToCart);
+            buyButtonPanel.add(clearCart);
 
             //Sell Panel
             sellPanel.add(sellLabel);
@@ -574,6 +578,9 @@ public class ClientGUIDB extends JFrame {
                     }
 
                 }
+                else if (e.getSource() == transactionPanel.clearCart) {
+                    transactionPanel.cartArea.setText("");
+                }
                 //Logic of transaction panel
                 else if (e.getSource() == transactionPanel.searchButton || e.getSource() == transactionPanel.sellButton
                         || e.getSource() == transactionPanel.addToCart){
@@ -653,8 +660,6 @@ public class ClientGUIDB extends JFrame {
 
     //Swaps client back to main panel, disconnects user, resets their permission, and resets cart
     private void logoutUser(){
-        //String sql = "SELECT * FROM engr_class019.registration where (username = '"+username+"')";
-        //mySQL.connectToDataBase(sql);
         try {
             String sql = "update registration set connection='no' where (username='" + username + "')";
             mySQL.connectToDataBase(sql);
@@ -903,12 +908,6 @@ public class ClientGUIDB extends JFrame {
     public static void main(String args[]){
 
         ClientGUIDB clientGUIDB = new ClientGUIDB();
-//        try{
-//            String sql = "delete from transactionHistory where username = 'siqu'";
-//            clientGUIDB.statement.executeUpdate(sql);
-//        } catch (Exception e){
-//            e.printStackTrace();
-//        }
 
         clientGUIDB.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         clientGUIDB.setSize(1200, 700);
