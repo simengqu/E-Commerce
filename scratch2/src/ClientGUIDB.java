@@ -9,19 +9,19 @@ import java.util.HashMap;
 
 public class ClientGUIDB extends JFrame {
 
-    private MainPanel mainPanel;
-    private RegisterPanel registerPanel;
-    private LogInPanel logInPanel;
-    private TransactionPanel transactionPanel;
-    private SellPanel sellPanel;
-    private MySQL mySQL;
-    private Connection connection = null;
-    private Statement statement = null;
-    private String sql;
-    private ResultSet resultSet;
-    private String type = "";
-    private String username = "~~~";
-    private HashMap<String, Integer> cartList = new HashMap<>();
+    private MainPanel mainPanel; //Main Viewer Panel
+    private RegisterPanel registerPanel; //User Registration Panel
+    private LogInPanel logInPanel;//Login Panel
+    private TransactionPanel transactionPanel;//Main Transaction Panel
+    private SellPanel sellPanel;//Adding to inventory panel
+    private MySQL mySQL;//Access to mySQL database
+    private Connection connection = null;//Database connection
+    private Statement statement = null;//Database statement
+    private String sql;//sql command string
+    private ResultSet resultSet;//current table line
+    private String type = ""; //Type of user permission
+    private String username = "~~~"; //User
+    private HashMap<String, Integer> cartList = new HashMap<>(); //List of items in the cart
 
     public ClientGUIDB(){
 
