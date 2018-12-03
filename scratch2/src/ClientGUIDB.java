@@ -355,11 +355,41 @@ public class ClientGUIDB extends JFrame {
 
     }
 
-    //TODO: MAKE A FUCKING SELL PANEL
+    //Panel to facilitate
     private class SellPanel extends JPanel{
         JTextArea nameArea;
         JTextField descriptionField, priceField, unitField;
         JButton addItem;
+
+        SellPanel(){
+            //Create all Panels and setup layout
+            setLayout(new BorderLayout(20,20));
+            JPanel centerPanel = new JPanel(new GridLayout(4,2));
+            JPanel southPanel = new JPanel();
+            southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.LINE_AXIS));
+            add(centerPanel, BorderLayout.CENTER);
+            add(southPanel, BorderLayout.SOUTH);
+
+            //Create text area
+            nameArea = new JTextArea();
+            descriptionField = new JTextField();
+            priceField = new JTextField();
+            unitField = new JTextField();
+            centerPanel.add(new JLabel("Name: ")); centerPanel.add(nameArea);
+            centerPanel.add(new JLabel("Description: ")); centerPanel.add(descriptionField);
+            centerPanel.add(new JLabel("Price: ")); centerPanel.add(priceField);
+            centerPanel.add(new JLabel("Unit Count: ")); centerPanel.add(unitField);
+
+            //Create button place
+            addItem = new JButton("Add Item");
+            addItem.addActionListener(new ButtonHandler());
+            southPanel.add(Box.createHorizontalGlue());
+            southPanel.add(addItem);
+            southPanel.add(Box.createHorizontalGlue());
+
+            setVisible(false);
+
+        }
 
 
 
@@ -645,7 +675,7 @@ public class ClientGUIDB extends JFrame {
                                 sql = "update item set numitems=" + itemLeft + " where (itemname='" + currentItem + "')";
                                 statement.executeUpdate(sql);
                                 sql = "INSERT INTO transactionHistory VALUES ('"+username+"', '"+currentItem+"'," +
-                                        " '"+transactionItem+"', '"+price*transactionItem+"', '"+type+"')";
+                                        " '"+transactionItem+"', '"+price*transactionItem+"', '"+"buyer"+"')";
                                 statement.executeUpdate(sql);
                             }
 
