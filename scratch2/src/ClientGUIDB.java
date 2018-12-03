@@ -705,7 +705,7 @@ public class ClientGUIDB extends JFrame {
                                 sql = "update item set numitems=" + itemLeft + " where (itemname='" + currentItem + "')";
                                 statement.executeUpdate(sql);
                                 sql = "INSERT INTO transactionHistory VALUES ('"+username+"', '"+currentItem+"'," +
-                                        " '"+transactionItem+"', '"+price*transactionItem+"', '"+"buyer"+"')";
+                                        " '"+transactionItem+"', '"+price*transactionItem+"', '"+"buy"+"')";
                                 statement.executeUpdate(sql);
                             }
 
@@ -790,7 +790,7 @@ public class ClientGUIDB extends JFrame {
         //TODO: FIX
         try {
             sql = "INSERT INTO transactionHistory VALUES ('" + username + "', '" + name + "'," +
-                    " '" + units + "', '" + price + "', '" + "seller" + "')";
+                    " '" + units + "', '" + price + "', '" + "sell" + "')";
             statement.executeUpdate(sql);
 
             sql = "INSERT INTO item VALUES ('" + name + "', '" + description + "'," +
