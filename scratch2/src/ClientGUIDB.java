@@ -104,6 +104,7 @@ public class ClientGUIDB extends JFrame {
         JButton seller = new JButton("Register as seller");
         JButton buyer = new JButton("Register as buyer");
         JButton both = new JButton("Register as both");
+        JButton back = new JButton("Back");
 
         private RegisterPanel(){
 
@@ -139,6 +140,9 @@ public class ClientGUIDB extends JFrame {
             both.addActionListener(buttonHandler);
             both.setMaximumSize(buttonSize);
             both.setPreferredSize(buttonSize);
+            back.addActionListener(buttonHandler);
+            back.setMaximumSize(buttonSize);
+            back.setPreferredSize(buttonSize);
 
             //Add panels
             add(topBox);
@@ -176,6 +180,8 @@ public class ClientGUIDB extends JFrame {
             botPanel.add(buyer);
             botPanel.add(Box.createRigidArea(new Dimension(15, 30)));
             botPanel.add(both);
+            botPanel.add(Box.createRigidArea(new Dimension(15, 30)));
+            botPanel.add(back);
             botPanel.add(Box.createHorizontalGlue());
 
             topPanel.setVisible(true);
@@ -201,6 +207,7 @@ public class ClientGUIDB extends JFrame {
         JTextField userName = new JTextField(10);
         JPasswordField password = new JPasswordField(10);
         JButton logInButton = new JButton("        LOG IN         ");
+        JButton back = new JButton("Back");
 
         private LogInPanel(){
 
@@ -219,6 +226,8 @@ public class ClientGUIDB extends JFrame {
             ButtonHandler buttonHandler = new ButtonHandler();
             logInButton.addActionListener(buttonHandler);
             logInButton.setSize(200,50);
+            back.addActionListener(buttonHandler);
+            back.setSize(200,50);
 
             add(topBox, BorderLayout.NORTH);
             topBox.add(userNameLabel);
@@ -229,6 +238,7 @@ public class ClientGUIDB extends JFrame {
 
             add(centerBox, BorderLayout.CENTER);
             centerBox.add(logInButton);
+            centerBox.add(back);
 
             setVisible(false);
         }
@@ -411,6 +421,7 @@ public class ClientGUIDB extends JFrame {
         mySQL.connectToDataBase(sql);
         // read table
         try{
+            resultSet = statement.executeQuery(sql);
             textArea.setText("");
             while (resultSet.next()){
 
@@ -418,6 +429,8 @@ public class ClientGUIDB extends JFrame {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            mySQL.closeConn();
         }
     }
 
@@ -436,9 +449,21 @@ public class ClientGUIDB extends JFrame {
                 // go to login from Main
                 else if (e.getSource() == mainPanel.getLogIn()){
 
+                    logInPanel.password.setText("");
+                    logInPanel.userName.setText("");
                     // remove main panel, set it invisible, add log in panel
                     swapPanel(logInPanel, mainPanel);
 
+                }
+                else if (e.getSource() == logInPanel.back){
+                    logInPanel.password.setText("");
+                    logInPanel.userName.setText("");
+                    swapPanel(mainPanel, logInPanel);
+                }
+                else if (e.getSource() == registerPanel.back) {
+                    registerPanel.password.setText("");
+                    registerPanel.userName.setText("");
+                    swapPanel(mainPanel, registerPanel);
                 }
                 // Logic of Register
                 else if ( e.getSource() == registerPanel.getSeller() ||
@@ -454,6 +479,7 @@ public class ClientGUIDB extends JFrame {
                     // inquiry database
                     String sql = "SELECT * FROM engr_class019.registration where (username = '"+username+"')";
                     mySQL.connectToDataBase(sql);
+                    resultSet = statement.executeQuery(sql);
                     String user;
                     String password = String.valueOf(registerPanel.password.getPassword());
                     type = "";
@@ -502,6 +528,9 @@ public class ClientGUIDB extends JFrame {
                         displayItems(transactionPanel.textArea);
                     }
 
+                    registerPanel.password.setText("");
+                    registerPanel.userName.setText("");
+
                 }
                 //Logic of login
                 else if (e.getSource() == logInPanel.getLogInButton()) {
@@ -512,6 +541,7 @@ public class ClientGUIDB extends JFrame {
                     String password = String.valueOf(logInPanel.password.getPassword());
                     String sql = "SELECT * FROM engr_class019.registration where (username = '"+username+"')";
                     mySQL.connectToDataBase(sql);
+                    resultSet = statement.executeQuery(sql);
                     String user;
                     String pwd;
 
@@ -531,6 +561,7 @@ public class ClientGUIDB extends JFrame {
                         displayItems(transactionPanel.textArea);
                         try {
                             sql = "update registration set connection='yes' where (username='" + username + "')";
+                            mySQL.connectToDataBase(sql);
                             statement.executeUpdate(sql);
                         }
                         catch (Exception ex){ex.printStackTrace();}
@@ -545,7 +576,7 @@ public class ClientGUIDB extends JFrame {
                 }
                 //Logic of transaction panel
                 else if (e.getSource() == transactionPanel.searchButton || e.getSource() == transactionPanel.sellButton
-                         || e.getSource() == transactionPanel.addToCart){
+                        || e.getSource() == transactionPanel.addToCart){
 
                     boolean itemInStock = false;
                     String itemName;
@@ -558,6 +589,7 @@ public class ClientGUIDB extends JFrame {
 
                     String sql = "SELECT * FROM engr_class019.item where (itemname = '"+itemName+"')";
                     mySQL.connectToDataBase(sql);
+                    resultSet = statement.executeQuery(sql);
                     String description = "";
                     int numItems = 0;
                     double price = 0;
@@ -582,18 +614,25 @@ public class ClientGUIDB extends JFrame {
 
                         if(e.getSource() == transactionPanel.addToCart) updateCart(itemName, price);
                     }
-                    if(e.getSource() == transactionPanel.sellButton) sellItem(itemName, 1);
                     else{
-                        JOptionPane.showMessageDialog(ClientGUIDB.this,
-                                "Item not found.");
+                        if (e.getSource() != transactionPanel.sellButton){
+                            JOptionPane.showMessageDialog(ClientGUIDB.this,
+                                    "Item not found.");
+                        }
                     }
+
+                    if(e.getSource() == transactionPanel.sellButton) sellItem(itemName, 1);
+
                 }
                 else if(e.getSource() == transactionPanel.buyButton){ buyItemsInCart(); }
                 else if(e.getSource() == transactionPanel.logoutButton) logoutUser();
                 else if (e.getSource() == sellPanel.addItem){
-                        addItemToSell();
-                        swapPanel(transactionPanel, sellPanel);
-                        displayItems(transactionPanel.textArea);
+                    addItemToSell();
+                    swapPanel(transactionPanel, sellPanel);
+                    displayItems(transactionPanel.textArea);
+                    sellPanel.priceField.setText("");
+                    sellPanel.unitField.setText("");
+                    sellPanel.descriptionField.setText("");
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -614,13 +653,17 @@ public class ClientGUIDB extends JFrame {
 
     //Swaps client back to main panel, disconnects user, resets their permission, and resets cart
     private void logoutUser(){
-        String sql = "SELECT * FROM engr_class019.registration where (username = '"+username+"')";
-        mySQL.connectToDataBase(sql);
+        //String sql = "SELECT * FROM engr_class019.registration where (username = '"+username+"')";
+        //mySQL.connectToDataBase(sql);
         try {
-            sql = "update registration set connection='no' where (username='" + username + "')";
+            String sql = "update registration set connection='no' where (username='" + username + "')";
+            mySQL.connectToDataBase(sql);
             statement.executeUpdate(sql);
         }
         catch (Exception ex){ex.printStackTrace();}
+        finally {
+            mySQL.closeConn();
+        }
         type = "";
         username = "";
         cartList.clear();
@@ -653,6 +696,8 @@ public class ClientGUIDB extends JFrame {
 
             } catch (Exception ex) {
                 ex.printStackTrace();
+            } finally {
+                mySQL.closeConn();
             }
         }
         else {
@@ -681,6 +726,7 @@ public class ClientGUIDB extends JFrame {
                     for (String currentItem : cartList.keySet()) {
                         String sql = "SELECT * FROM engr_class019.item where (itemname = '" + currentItem + "')";
                         mySQL.connectToDataBase(sql);
+                        resultSet = statement.executeQuery(sql);
 
                         //Loops through the list of items to display the item information
                         while (resultSet.next()) {
@@ -722,6 +768,8 @@ public class ClientGUIDB extends JFrame {
 
                 } catch (Exception ex) {
                     ex.printStackTrace();
+                } finally {
+                    mySQL.closeConn();
                 }
             }
         }
@@ -746,6 +794,7 @@ public class ClientGUIDB extends JFrame {
         //Check if user is allow to purchase this item
         if(type.equals("seller") || type.equals("both")) {
             try {
+                resultSet = statement.executeQuery(sql);
                 while (resultSet.next()) {
                     if (itemName.toLowerCase().equals(resultSet.getString("itemname").toLowerCase())) {
                         found = true;
@@ -771,6 +820,8 @@ public class ClientGUIDB extends JFrame {
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
+            } finally {
+                mySQL.closeConn();
             }
         }
         else {
@@ -781,7 +832,7 @@ public class ClientGUIDB extends JFrame {
 
     //Adds an item to the database
     private void addItemToSell(){
-        String name = sellPanel.nameArea.getText();
+        String itemName = sellPanel.nameArea.getText();
         String description = sellPanel.descriptionField.getText();
         Double price = Double.parseDouble(sellPanel.priceField.getText());
         Integer units = Integer.parseInt(sellPanel.unitField.getText());
@@ -789,15 +840,23 @@ public class ClientGUIDB extends JFrame {
 
         //TODO: FIX
         try {
-            sql = "INSERT INTO transactionHistory VALUES ('" + username + "', '" + name + "'," +
+            sql = "INSERT INTO transactionHistory VALUES ('" + username + "', '" + itemName + "'," +
                     " '" + units + "', '" + price + "', '" + "sell" + "')";
+
+            mySQL.connectToDataBase(sql);
             statement.executeUpdate(sql);
 
-            sql = "INSERT INTO item VALUES ('" + name + "', '" + description + "'," +
-                    " '" + units + "', '" + price + "')";
+            sql = "INSERT INTO item VALUES ('" + itemName + "', " +
+                    "'" + description + "'," +
+                    "'" + units + "', " +
+                    "'" + price + "')";
+            mySQL.connectToDataBase(sql);
             statement.executeUpdate(sql);
         }
         catch (SQLException e){e.printStackTrace();}
+        finally {
+            mySQL.closeConn();
+        }
 
     }
 
@@ -818,7 +877,7 @@ public class ClientGUIDB extends JFrame {
                 statement = connection.createStatement();
                 // Result set get the result of the SQL query
                 sql = sqlStr;
-                resultSet = statement.executeQuery(sql);
+
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -826,45 +885,6 @@ public class ClientGUIDB extends JFrame {
 
         }
 
-        // not in user for now
-        public void writeToDataBase(String table) {
-
-            try {
-                // This will load the MySQL driver, each DB has its own driver
-                Class.forName("com.mysql.cj.jdbc.Driver");
-                System.out.println("open connection...");
-                // Setup the connection with the DB
-                connection = DriverManager.getConnection(
-                        "jdbc:mysql://s-l112.engr.uiowa.edu:3306/engr_class019",
-                        "engr_class019",
-                        "team19");
-
-                // Statements allow to issue SQL queries to the database
-                statement = connection.createStatement();
-                // Result set get the result of the SQL query
-                sql = "SELECT * FROM engr_class019." + table;
-                resultSet = statement.executeQuery(sql);
-
-
-                // write to table
-                if (table.equals("registration")) {
-                    username = registerPanel.userName.getText();
-                    String password = String.valueOf(registerPanel.password.getPassword());
-
-                    sql = "insert into " + table + "(username, password) values('"+username+"', '"+password+"')";
-                    statement.executeUpdate(sql);
-                } else if (table.equals("transactionHistory")) {
-
-                } else if (table.equals("item")) {
-
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                closeConn();
-            }
-        }
 
         public void closeConn()
         {
@@ -881,7 +901,15 @@ public class ClientGUIDB extends JFrame {
 
 
     public static void main(String args[]){
+
         ClientGUIDB clientGUIDB = new ClientGUIDB();
+//        try{
+//            String sql = "delete from transactionHistory where username = 'siqu'";
+//            clientGUIDB.statement.executeUpdate(sql);
+//        } catch (Exception e){
+//            e.printStackTrace();
+//        }
+
         clientGUIDB.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         clientGUIDB.setSize(1200, 700);
         clientGUIDB.pack();

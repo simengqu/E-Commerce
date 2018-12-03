@@ -287,21 +287,23 @@ public class ServerGUIDB extends JFrame {
 
                             connection = resultSet.getString("connection");
                             type = resultSet.getString("type");
+                            String conn = "";
                             if (connection.equals("yes")){
 
-                                if (type.equals("both")) {
-                                    sellerArea.append(user + " connected.\n");
-                                    buyerArea.append(user + " connected.\n");
-                                }
-                                else if (type.equals("seller")) {
-                                    sellerArea.append(user + " connected.\n");
-                                }
-                                else if (type.equals("buyer")) {
-                                    buyerArea.append(user + " connected.\n");
-                                }
+                                conn = " connected.\n";
                             }
                             else {
-                                sellerArea.append(user + " not connected.\n");
+                                conn = " not connected.\n";
+                            }
+                            if (type.equals("both")) {
+                                sellerArea.append(user + conn);
+                                buyerArea.append(user + conn);
+                            }
+                            else if (type.equals("seller")) {
+                                sellerArea.append(user + conn);
+                            }
+                            else if (type.equals("buyer")) {
+                                buyerArea.append(user + conn);
                             }
                         }
                     }
@@ -350,11 +352,15 @@ public class ServerGUIDB extends JFrame {
 
                         if (connection.equals("yes")){
 
-                            if (type.equals("seller") || type.equals("both")) {
+                            if (type.equals("both")) {
+                                buyerArea.append(username + " connected.\n");
                                 sellerArea.append(username + " connected.\n");
                             }
-                            else if (type.equals("buyer") || type.equals("both")) {
+                            else if (type.equals("buyer")) {
                                 buyerArea.append(username + " connected.\n");
+                            }
+                            else if (type.equals("seller")) {
+                                sellerArea.append(username + " connected.\n");
                             }
                         }
                     }
