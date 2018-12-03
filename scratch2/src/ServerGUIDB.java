@@ -67,13 +67,10 @@ public class ServerGUIDB extends JFrame {
 
         // text areas
         displayArea = new JTextArea();
-        displayArea.setPreferredSize(new Dimension(400,600));
         displayArea.setEditable(false);
         sellerArea = new JTextArea();
-        sellerArea.setPreferredSize(new Dimension(300,600));
         sellerArea.setEditable(false);
         buyerArea = new JTextArea();
-        buyerArea.setPreferredSize(new Dimension(300,600));
         buyerArea.setEditable(false);
 
         // text field
@@ -84,6 +81,7 @@ public class ServerGUIDB extends JFrame {
         // display panel
         displayPanel = new JPanel();
         displayPanel.setLayout(new BoxLayout(displayPanel, BoxLayout.Y_AXIS));
+        displayPanel.setPreferredSize(new Dimension(500, 600));
         displayPanel.add(displayLabel);
         displayPanel.add(new JScrollPane(displayArea));
 
@@ -105,7 +103,6 @@ public class ServerGUIDB extends JFrame {
         // client panel
         clientPanel = new JPanel();
         clientPanel.setPreferredSize(new Dimension(300, 400));
-        //clientPanel.setLayout(new BoxLayout(clientPanel, BoxLayout.X_AXIS));
         JLabel sellerLabel = new JLabel("Sellers");
         JLabel buyerLabel = new JLabel("Buyers");
         clientPanel.setLayout(new GridBagLayout());
@@ -136,9 +133,9 @@ public class ServerGUIDB extends JFrame {
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
         mainPanel.add(Box.createRigidArea(new Dimension(50, 200)));
         mainPanel.add(displayPanel);
-        mainPanel.add(Box.createRigidArea(new Dimension(100, 200)));
+        mainPanel.add(Box.createRigidArea(new Dimension(50, 200)));
         mainPanel.add(buttonPanel);
-        mainPanel.add(Box.createRigidArea(new Dimension(100, 200)));
+        mainPanel.add(Box.createRigidArea(new Dimension(50, 200)));
         mainPanel.add(clientPanel);
         mainPanel.add(Box.createRigidArea(new Dimension(50, 200)));
         JPanel temp1 = new JPanel();
@@ -181,8 +178,6 @@ public class ServerGUIDB extends JFrame {
                         displayArea.append(user + " " + type + " " + numItems + " " + item + " at a price of " + price + "\n");
 
                     }
-
-                    System.out.println("show history...");
 
                 }
                 else if (e.getSource() == buyHistory || e.getSource() == sellHistory){
@@ -229,9 +224,6 @@ public class ServerGUIDB extends JFrame {
                             }
                         }
                     }
-
-
-                    System.out.println("show history...");
 
                 }
                 else if (e.getSource() == searchUser){

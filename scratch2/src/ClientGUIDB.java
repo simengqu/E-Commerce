@@ -22,11 +22,14 @@ public class ClientGUIDB extends JFrame {
     private String type = ""; //Type of user permission
     private String username = "~~~"; //User
     private HashMap<String, Integer> cartList = new HashMap<>(); //List of items in the cart
+    private StringBuilder stringBuilder;
+    private boolean purchased = false;
 
     public ClientGUIDB(){
 
         // database
         mySQL = new MySQL();
+        stringBuilder  = new StringBuilder();
 
         // main GUI, only display once at the beginning, contains list of items
         mainPanel = new MainPanel();
@@ -63,7 +66,6 @@ public class ClientGUIDB extends JFrame {
 
             displayArea = new JTextArea();
             displayArea.setEditable(false);
-            displayArea.setPreferredSize(new Dimension(400, 600));
 
             JPanel buttonArea = new JPanel(new BorderLayout());
             JPanel buttonUpperArea = new JPanel(new GridLayout(2,1));
@@ -279,7 +281,7 @@ public class ClientGUIDB extends JFrame {
             //Purchase List
             textArea = new JTextArea();
             textArea.setEditable(false);
-            textArea.setPreferredSize(new Dimension(300, 400));
+            //textArea.setPreferredSize(new Dimension(300, 400));
 
             //Items Bought Panel
             JPanel itemBoughtPanel = new JPanel(new BorderLayout(0, 5));
@@ -290,13 +292,11 @@ public class ClientGUIDB extends JFrame {
             JLabel itemBoughtLabel = new JLabel("Transaction Information");
             itemBoughtArea = new JTextArea();
             itemBoughtArea.setEditable(false);
-            itemBoughtArea.setPreferredSize(new Dimension(300, 100));
 
             //Cart Area
             JLabel cartLabel = new JLabel("Current Cart");
             cartArea = new JTextArea();
             cartArea.setEditable(false);
-            cartArea.setPreferredSize(new Dimension(300, 100));
 
 
             //Buy area
@@ -330,6 +330,7 @@ public class ClientGUIDB extends JFrame {
 
             //Adding west panel
             JPanel westPanel = new JPanel(new BorderLayout());
+            westPanel.setPreferredSize(new Dimension(300, 400));
             add(westPanel, BorderLayout.WEST);
             westPanel.add(new JScrollPane(textArea), BorderLayout.CENTER);
             westPanel.add(new JLabel("Current Item Inventory"), BorderLayout.NORTH);
@@ -341,7 +342,9 @@ public class ClientGUIDB extends JFrame {
 
             //Label Panel and Text box Area
             labelPanel.add(itemBoughtLabel); labelPanel.add(cartLabel);
-            textBoxPanel.add(new JScrollPane(itemBoughtArea)); textBoxPanel.add(new JScrollPane(cartArea));
+            textBoxPanel.setPreferredSize(new Dimension(300, 100));
+            textBoxPanel.add(new JScrollPane(itemBoughtArea));
+            textBoxPanel.add(new JScrollPane(cartArea));
 
 
             //Central Panel look
@@ -518,7 +521,6 @@ public class ClientGUIDB extends JFrame {
                         }
                         catch (Exception ex){ex.printStackTrace();}
 
-                        System.out.println("username: " + username + " password: " + password);
                     }
                     else {
                         JOptionPane.showMessageDialog(ClientGUIDB.this,
@@ -570,7 +572,6 @@ public class ClientGUIDB extends JFrame {
                         }
                         catch (Exception ex){ex.printStackTrace();}
 
-                        System.out.println("username: " + username + " password: " + password);
                     }
                     else {
                         JOptionPane.showMessageDialog(ClientGUIDB.this,
@@ -631,7 +632,18 @@ public class ClientGUIDB extends JFrame {
                     if(e.getSource() == transactionPanel.sellButton) sellItem(itemName, 1);
 
                 }
-                else if(e.getSource() == transactionPanel.buyButton){ buyItemsInCart(); }
+                else if(e.getSource() == transactionPanel.buyButton){
+                    //stringBuilder.append("You bought:\n");
+                    buyItemsInCart();
+                    if (purchased){
+                        JOptionPane.showMessageDialog(ClientGUIDB.this.transactionPanel,
+                                stringBuilder.toString());
+
+                    }
+                    //System.out.println(stringBuilder.toString());
+                    purchased = false;
+                    stringBuilder.setLength(0);
+                }
                 else if(e.getSource() == transactionPanel.logoutButton) logoutUser();
                 else if (e.getSource() == sellPanel.addItem){
                     addItemToSell();
@@ -728,6 +740,7 @@ public class ClientGUIDB extends JFrame {
             else{
                 //Handles exception caused by connectToDataBase()
                 try {
+
                     for (String currentItem : cartList.keySet()) {
                         String sql = "SELECT * FROM engr_class019.item where (itemname = '" + currentItem + "')";
                         mySQL.connectToDataBase(sql);
@@ -739,6 +752,8 @@ public class ClientGUIDB extends JFrame {
                                 found = true;
                                 itemLeft = resultSet.getInt("numitems");
                                 price = resultSet.getDouble("price");
+                                stringBuilder.append(currentItem + ": $" + price + "\n");
+                                System.out.println(stringBuilder.toString());
                             }
 
                         }
@@ -758,10 +773,10 @@ public class ClientGUIDB extends JFrame {
                                 sql = "INSERT INTO transactionHistory VALUES ('"+username+"', '"+currentItem+"'," +
                                         " '"+transactionItem+"', '"+price*transactionItem+"', '"+"buy"+"')";
                                 statement.executeUpdate(sql);
+
+                                purchased = true;
                             }
 
-                        } else {
-                            System.out.println("Not found: " + currentItem);
                         }
                         found = false;
 
@@ -788,7 +803,7 @@ public class ClientGUIDB extends JFrame {
 
     //Increments or adds item to database
     public void sellItem(String itemName, int numItems){
-        System.out.println(itemName);
+
         String sql = "SELECT * FROM engr_class019.item where (itemname = '"+itemName+"')";
         mySQL.connectToDataBase(sql);
         String description = "";
@@ -871,7 +886,6 @@ public class ClientGUIDB extends JFrame {
             try {
                 // This will load the MySQL driver, each DB has its own driver
                 Class.forName("com.mysql.cj.jdbc.Driver");
-                System.out.println("open connection...");
                 // Setup the connection with the DB
                 connection = DriverManager.getConnection(
                         "jdbc:mysql://s-l112.engr.uiowa.edu:3306/engr_class019",
