@@ -36,6 +36,10 @@ public class ServerGUIDB extends JFrame {
     private JTextArea sellerArea;
     private JTextArea buyerArea;
 
+    // JLabel
+    private JLabel displayLabel;
+
+
     public ServerGUIDB(){
 
         super("Server");
@@ -43,11 +47,8 @@ public class ServerGUIDB extends JFrame {
         // mySQL
         mySQL = new MySQL();
 
-        // panels
-        mainPanel = new JPanel();
-        buttonPanel = new JPanel();
-        displayPanel = new JPanel();
-        clientPanel = new JPanel();
+        // labels
+        displayLabel = new JLabel("Message");
 
         // buttons
         ButtonHandler buttonHandler = new ButtonHandler();
@@ -80,11 +81,14 @@ public class ServerGUIDB extends JFrame {
         JLabel userTransactionHistory = new JLabel("username");
         userTransactionHistory.setLabelFor(userField);
 
-        // text area panel
-        displayPanel.setLayout(new BoxLayout(displayPanel, BoxLayout.X_AXIS));
-        displayPanel.add(new JScrollPane(displayArea), BorderLayout.CENTER);
+        // display panel
+        displayPanel = new JPanel();
+        displayPanel.setLayout(new BoxLayout(displayPanel, BoxLayout.Y_AXIS));
+        displayPanel.add(displayLabel);
+        displayPanel.add(new JScrollPane(displayArea));
 
         // button panel
+        buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
         buttonPanel.add(Box.createRigidArea(new Dimension(15, 100)));
         buttonPanel.add(showHistory);
@@ -99,12 +103,36 @@ public class ServerGUIDB extends JFrame {
         buttonPanel.add(Box.createRigidArea(new Dimension(15, 200)));
 
         // client panel
-        clientPanel.setPreferredSize(new Dimension(400, 400));
-        clientPanel.setLayout(new BoxLayout(clientPanel, BoxLayout.X_AXIS));
-        clientPanel.add(new JScrollPane(buyerArea));
-        clientPanel.add(new JScrollPane(sellerArea));
+        clientPanel = new JPanel();
+        clientPanel.setPreferredSize(new Dimension(300, 400));
+        //clientPanel.setLayout(new BoxLayout(clientPanel, BoxLayout.X_AXIS));
+        JLabel sellerLabel = new JLabel("Sellers");
+        JLabel buyerLabel = new JLabel("Buyers");
+        clientPanel.setLayout(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 0;
+        c.gridy = 0;
+        c.weightx = 0.5;
+        c.weighty = 0.2;
+        clientPanel.add(buyerLabel, c);
+        c.gridx = 1;
+        c.gridy = 0;
+        c.weightx = 0.5;
+        c.weighty = 0.2;
+        clientPanel.add(sellerLabel, c);
+        c.gridx = 0;
+        c.gridy = 1;
+        c.ipadx = 200;
+        c.ipady = 400;
+        clientPanel.add(new JScrollPane(buyerArea), c);
+        c.gridx = 1;
+        c.gridy = 1;
+        c.ipadx = 200;
+        c.ipady = 400;
+        clientPanel.add(new JScrollPane(sellerArea), c);
 
         //mainPanel.add(buttonPanel);
+        mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
         mainPanel.add(Box.createRigidArea(new Dimension(50, 200)));
         mainPanel.add(displayPanel);
@@ -131,6 +159,7 @@ public class ServerGUIDB extends JFrame {
 
                 if (e.getSource() == showHistory){
 
+                    displayLabel.setText("Transaction History");
                     displayArea.setText("");
                     String sql = "SELECT * FROM engr_class019.transactionHistory";
                     mySQL.connectToDataBase(sql);
@@ -170,6 +199,7 @@ public class ServerGUIDB extends JFrame {
 
                     if (e.getSource() == buyHistory) {
 
+                        displayLabel.setText("Purchases History");
                         while (resultSet.next()){
 
                             user = resultSet.getString("username");
@@ -185,6 +215,7 @@ public class ServerGUIDB extends JFrame {
                     }
                     else if (e.getSource() == sellHistory) {
 
+                        displayLabel.setText("Sales History");
                         while (resultSet.next()){
 
                             user = resultSet.getString("username");
@@ -207,7 +238,7 @@ public class ServerGUIDB extends JFrame {
 
                     String userInput = userField.getText();
                     displayArea.setText("");
-                    String sql = "SELECT * FROM engr_class019.transactionHistory";
+                    String sql = "SELECT * FROM engr_class019.transactionHistory where (username='"+userInput+"')";
                     mySQL.connectToDataBase(sql);
 
                     String user = "";
@@ -220,7 +251,7 @@ public class ServerGUIDB extends JFrame {
                     while (resultSet.next()){
 
                         user = resultSet.getString("username");
-                        if (userInput.equals(user)){
+                        //if (userInput.equals(user)){
 
                             found = true;
                             item = resultSet.getString("item");
@@ -228,20 +259,57 @@ public class ServerGUIDB extends JFrame {
                             price = resultSet.getDouble("price");
                             type = resultSet.getString("type");
 
+                            if (type.equals("buy")) {
+                                displayLabel.setText("Purchases History");
+                            }
+                            else if (type.equals("sell")){
+                                displayLabel.setText("Sales History");
+                            }
                             displayArea.append(user + " " + type + " " + numItems + " " + item + " at a price of " + price + "\n");
-                        }
+                        //}
                     }
 
                     if (!found) {
+
                         JOptionPane.showMessageDialog(ServerGUIDB.this,
                                 "No transaction history.");
                     }
 
-                    System.out.println("show user history...");
+                    if (found) {
+
+                        sellerArea.setText("");
+                        buyerArea.setText("");
+                        sql = "SELECT * FROM engr_class019.registration where (username='"+userInput+"')";
+                        mySQL.connectToDataBase(sql);
+                        String connection = "";
+
+                        while (resultSet.next()) {
+
+                            connection = resultSet.getString("connection");
+                            type = resultSet.getString("type");
+                            if (connection.equals("yes")){
+
+                                if (type.equals("both")) {
+                                    sellerArea.append(user + " connected.\n");
+                                    buyerArea.append(user + " connected.\n");
+                                }
+                                else if (type.equals("seller")) {
+                                    sellerArea.append(user + " connected.\n");
+                                }
+                                else if (type.equals("buyer")) {
+                                    buyerArea.append(user + " connected.\n");
+                                }
+                            }
+                            else {
+                                sellerArea.append(user + " not connected.\n");
+                            }
+                        }
+                    }
 
                 }
                 else if (e.getSource() == inventory){
 
+                    displayLabel.setText("Inventory");
                     displayArea.setText("");
                     String sql = "SELECT * FROM engr_class019.item";
                     mySQL.connectToDataBase(sql);
@@ -283,10 +351,10 @@ public class ServerGUIDB extends JFrame {
                         if (connection.equals("yes")){
 
                             if (type.equals("seller") || type.equals("both")) {
-                                sellerArea.append(username + " connects.\n");
+                                sellerArea.append(username + " connected.\n");
                             }
                             else if (type.equals("buyer") || type.equals("both")) {
-                                buyerArea.append(username + " connects.\n");
+                                buyerArea.append(username + " connected.\n");
                             }
                         }
                     }
@@ -307,7 +375,6 @@ public class ServerGUIDB extends JFrame {
             try {
                 // This will load the MySQL driver, each DB has its own driver
                 Class.forName("com.mysql.cj.jdbc.Driver");
-                System.out.println("open connection...");
                 // Setup the connection with the DB
                 connection = DriverManager.getConnection(
                         "jdbc:mysql://s-l112.engr.uiowa.edu:3306/engr_class019",
@@ -319,10 +386,6 @@ public class ServerGUIDB extends JFrame {
                 // Result set get the result of the SQL query
                 sql = sqlStr;
                 resultSet = statement.executeQuery(sql);
-
-                System.out.println(sql);
-                System.out.println(resultSet.toString());
-                System.out.println("done connection...");
 
             } catch (Exception e) {
                 e.printStackTrace();
