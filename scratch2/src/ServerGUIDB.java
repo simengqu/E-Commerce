@@ -8,115 +8,118 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 public class ServerGUIDB extends JFrame {
+
+    // database
     private MySQL mySQL;
     private Connection connection = null;
     private Statement statement = null;
     private String sql;
     private ResultSet resultSet;
 
+    // panels
     private JPanel mainPanel;
     private JPanel buttonPanel;
-    private JPanel historyPanel;
+    private JPanel displayPanel;
     private JPanel clientPanel;
 
+    // buttons
     private JButton showHistory;
-//    private JButton buyHistory;
-//    private JButton sellHistory;
+    private JButton buyHistory;
+    private JButton sellHistory;
     private JButton searchUser;
     private JButton inventory;
+    private JButton showClients;
 
-    private JTextArea historyArea;
-    private JTextArea buyHistoryArea;
-    private JTextArea sellHistoryArea;
-    private JTextArea clientsArea;
-    private JTextArea userHistory;
-    private JTextArea inventoryArea;
-    //private JTextArea sellers;
-
+    // text area/field
+    private JTextArea displayArea;
     private JTextField userField;
+    private JTextArea sellerArea;
+    private JTextArea buyerArea;
 
     public ServerGUIDB(){
 
         super("Server");
+
         // mySQL
         mySQL = new MySQL();
 
         // panels
         mainPanel = new JPanel();
         buttonPanel = new JPanel();
-        historyPanel = new JPanel();
+        displayPanel = new JPanel();
         clientPanel = new JPanel();
 
         // buttons
         ButtonHandler buttonHandler = new ButtonHandler();
         showHistory = new JButton("show transaction history");
         showHistory.addActionListener(buttonHandler);
-//        buyHistory = new JButton("buy history");
-//        buyHistory.addActionListener(buttonHandler);
-//        sellHistory = new JButton("sell history");
-//        sellHistory.addActionListener(buttonHandler);
+        buyHistory = new JButton("buy history");
+        buyHistory.addActionListener(buttonHandler);
+        sellHistory = new JButton("sell history");
+        sellHistory.addActionListener(buttonHandler);
         searchUser = new JButton("search user");
         searchUser.addActionListener(buttonHandler);
         inventory = new JButton("Show inventory");
         inventory.addActionListener(buttonHandler);
+        showClients = new JButton("Show clients");
+        showClients.addActionListener(buttonHandler);
 
         // text areas
-        historyArea = new JTextArea();
-        historyArea.setPreferredSize(new Dimension(150,300));
-        historyArea.setEditable(false);
-        buyHistoryArea = new JTextArea();
-        buyHistoryArea.setPreferredSize(new Dimension(150,300));
-        buyHistoryArea.setEditable(false);
-        sellHistoryArea = new JTextArea();
-        sellHistoryArea.setPreferredSize(new Dimension(150,300));
-        sellHistoryArea.setEditable(false);
-        clientsArea = new JTextArea();
-        clientsArea.setPreferredSize(new Dimension(150,300));
-        clientsArea.setEditable(false);
-        userHistory = new JTextArea();
-        userHistory.setPreferredSize(new Dimension(150,300));
-        userHistory.setEditable(false);
-        inventoryArea = new JTextArea();
-        inventoryArea.setPreferredSize(new Dimension(150,300));
-        inventoryArea.setEditable(false);
-//        sellers = new JTextArea();
-//        sellers.setPreferredSize(new Dimension(150,300));
-//        sellers.setEditable(false);
+        displayArea = new JTextArea();
+        displayArea.setPreferredSize(new Dimension(400,600));
+        displayArea.setEditable(false);
+        sellerArea = new JTextArea();
+        sellerArea.setPreferredSize(new Dimension(300,600));
+        sellerArea.setEditable(false);
+        buyerArea = new JTextArea();
+        buyerArea.setPreferredSize(new Dimension(300,600));
+        buyerArea.setEditable(false);
 
         // text field
         userField = new JTextField(15);
-        JLabel userTransactionHistory = new JLabel("search user's transaction history");
+        JLabel userTransactionHistory = new JLabel("username");
         userTransactionHistory.setLabelFor(userField);
 
         // text area panel
-        historyPanel.setLayout(new GridLayout(2,3));
-        historyPanel.add(new JScrollPane(historyArea));
-        historyPanel.add(new JScrollPane(buyHistoryArea));
-        historyPanel.add(new JScrollPane(sellHistoryArea));
-        historyPanel.add(new JScrollPane(clientsArea));
-        historyPanel.add(new JScrollPane(userHistory));
-//        historyPanel.add(new JScrollPane(sellers));
+        displayPanel.setLayout(new BoxLayout(displayPanel, BoxLayout.X_AXIS));
+        displayPanel.add(new JScrollPane(displayArea), BorderLayout.CENTER);
 
         // button panel
-        buttonPanel.setPreferredSize(new Dimension(600, 100));
-        buttonPanel.setLayout(new GridLayout(2,4));
+        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
+        buttonPanel.add(Box.createRigidArea(new Dimension(15, 100)));
         buttonPanel.add(showHistory);
-//        buttonPanel.add(buyHistory);
-//        buttonPanel.add(sellHistory);
+        buttonPanel.add(buyHistory);
+        buttonPanel.add(sellHistory);
         buttonPanel.add(inventory);
+        buttonPanel.add(showClients);
+        buttonPanel.add(Box.createRigidArea(new Dimension(15, 100)));
         buttonPanel.add(userTransactionHistory);
         buttonPanel.add(userField);
         buttonPanel.add(searchUser);
+        buttonPanel.add(Box.createRigidArea(new Dimension(15, 200)));
 
         // client panel
-//        clientPanel.add(new JScrollPane(buyers), BorderLayout.CENTER);
-//        clientPanel.add(new JScrollPane(sellers), BorderLayout.CENTER);
+        clientPanel.setPreferredSize(new Dimension(400, 400));
+        clientPanel.setLayout(new BoxLayout(clientPanel, BoxLayout.X_AXIS));
+        clientPanel.add(new JScrollPane(buyerArea));
+        clientPanel.add(new JScrollPane(sellerArea));
 
         //mainPanel.add(buttonPanel);
-        mainPanel.add(historyPanel, BorderLayout.WEST);
-        mainPanel.add(buttonPanel, BorderLayout.EAST);
-        //mainPanel.add(clientPanel, BorderLayout.WEST);
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
+        mainPanel.add(Box.createRigidArea(new Dimension(50, 200)));
+        mainPanel.add(displayPanel);
+        mainPanel.add(Box.createRigidArea(new Dimension(100, 200)));
+        mainPanel.add(buttonPanel);
+        mainPanel.add(Box.createRigidArea(new Dimension(100, 200)));
+        mainPanel.add(clientPanel);
+        mainPanel.add(Box.createRigidArea(new Dimension(50, 200)));
+        JPanel temp1 = new JPanel();
+        temp1.setPreferredSize(new Dimension(100, 100));
+        JPanel temp2 = new JPanel();
+        temp2.setPreferredSize(new Dimension(100, 100));
+        add(temp1, BorderLayout.NORTH);
         add(mainPanel, BorderLayout.CENTER);
+        add(temp2, BorderLayout.SOUTH);
     }
 
     private class ButtonHandler implements ActionListener {
@@ -128,9 +131,7 @@ public class ServerGUIDB extends JFrame {
 
                 if (e.getSource() == showHistory){
 
-                    historyArea.setText("");
-                    buyHistoryArea.setText("");
-                    sellHistoryArea.setText("");
+                    displayArea.setText("");
                     String sql = "SELECT * FROM engr_class019.transactionHistory";
                     mySQL.connectToDataBase(sql);
 
@@ -148,16 +149,56 @@ public class ServerGUIDB extends JFrame {
                         price = resultSet.getDouble("price");
                         type = resultSet.getString("type");
 
-                        historyArea.append("user " + user + " " + type + " " + numItems + " " + item + " at a price of " + price);
+                        displayArea.append(user + " " + type + " " + numItems + " " + item + " at a price of " + price + "\n");
 
-                        if (type.equals("buy")) {
-                            buyHistoryArea.append("user " + user + " " + type + " " + numItems + " " + item + " at a price of " + price);
-                        }
-                        else if (type.equals("sell")) {
-                            sellHistoryArea.append("user " + user + " " + type + " " + numItems + " " + item + " at a price of " + price);
+                    }
+
+                    System.out.println("show history...");
+
+                }
+                else if (e.getSource() == buyHistory || e.getSource() == sellHistory){
+
+                    displayArea.setText("");
+                    String sql = "SELECT * FROM engr_class019.transactionHistory";
+                    mySQL.connectToDataBase(sql);
+
+                    String user = "";
+                    String item = "";
+                    int numItems = 0;
+                    double price = 0;
+                    String type = "";
+
+                    if (e.getSource() == buyHistory) {
+
+                        while (resultSet.next()){
+
+                            user = resultSet.getString("username");
+                            item = resultSet.getString("item");
+                            numItems = resultSet.getInt("numitems");
+                            price = resultSet.getDouble("price");
+                            type = resultSet.getString("type");
+
+                            if (type.equals("buy")) {
+                                displayArea.append(user + " buy " + numItems + " " + item + " at a price of " + price + "\n");
+                            }
                         }
                     }
-                    //resultSet.close();
+                    else if (e.getSource() == sellHistory) {
+
+                        while (resultSet.next()){
+
+                            user = resultSet.getString("username");
+                            item = resultSet.getString("item");
+                            numItems = resultSet.getInt("numitems");
+                            price = resultSet.getDouble("price");
+                            type = resultSet.getString("type");
+
+                            if (type.equals("sell")) {
+                                displayArea.append(user + " sell " + numItems + " " + item + " at a price of " + price + "\n");
+                            }
+                        }
+                    }
+
 
                     System.out.println("show history...");
 
@@ -165,7 +206,7 @@ public class ServerGUIDB extends JFrame {
                 else if (e.getSource() == searchUser){
 
                     String userInput = userField.getText();
-                    userHistory.setText("");
+                    displayArea.setText("");
                     String sql = "SELECT * FROM engr_class019.transactionHistory";
                     mySQL.connectToDataBase(sql);
 
@@ -187,13 +228,13 @@ public class ServerGUIDB extends JFrame {
                             price = resultSet.getDouble("price");
                             type = resultSet.getString("type");
 
-                            userHistory.append("user " + user + " " + type + " " + numItems + " " + item + " at a price of " + price);
+                            displayArea.append(user + " " + type + " " + numItems + " " + item + " at a price of " + price + "\n");
                         }
                     }
 
                     if (!found) {
                         JOptionPane.showMessageDialog(ServerGUIDB.this,
-                                "User is not registered.");
+                                "No transaction history.");
                     }
 
                     System.out.println("show user history...");
@@ -201,7 +242,7 @@ public class ServerGUIDB extends JFrame {
                 }
                 else if (e.getSource() == inventory){
 
-                    inventoryArea.setText("");
+                    displayArea.setText("");
                     String sql = "SELECT * FROM engr_class019.item";
                     mySQL.connectToDataBase(sql);
 
@@ -217,12 +258,40 @@ public class ServerGUIDB extends JFrame {
                         numItems = resultSet.getInt("numitems");
                         price = resultSet.getDouble("price");
 
-                        userHistory.append(item + "\n" + description + "\n" + "in stock: " + numItems + "\nprice: " + price + "\n");
+                        displayArea.append(item + "\n" + description + "\n" + "in stock: " + numItems + "\nprice: " + price + "\n\n");
 
                     }
 
-                    System.out.println("show user history...");
                 }
+                else if (e.getSource() == showClients){
+
+                    sellerArea.setText("");
+                    buyerArea.setText("");
+                    String sql = "SELECT * FROM engr_class019.registration";
+                    mySQL.connectToDataBase(sql);
+
+                    String username = "";
+                    String type = "";
+                    String connection = "";
+
+                    while (resultSet.next()){
+
+                        username = resultSet.getString("username");
+                        type = resultSet.getString("type");
+                        connection = resultSet.getString("connection");
+
+                        if (connection.equals("yes")){
+
+                            if (type.equals("seller") || type.equals("both")) {
+                                sellerArea.append(username + " connects.\n");
+                            }
+                            else if (type.equals("buyer") || type.equals("both")) {
+                                buyerArea.append(username + " connects.\n");
+                            }
+                        }
+                    }
+                }
+
             } catch (Exception ex) {
                 ex.printStackTrace();
             } finally {
