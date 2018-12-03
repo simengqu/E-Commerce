@@ -3,7 +3,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ClientGUIDB extends JFrame {
@@ -12,12 +11,14 @@ public class ClientGUIDB extends JFrame {
     private RegisterPanel registerPanel;
     private LogInPanel logInPanel;
     private TransactionPanel transactionPanel;
+    private SellPanel sellPanel;
     private MySQL mySQL;
     private Connection connection = null;
     private Statement statement = null;
     private String sql;
     private ResultSet resultSet;
     private String type = "";
+    private String username = "";
     private HashMap<String, Integer> cartList = new HashMap<>();
 
     public ClientGUIDB(){
@@ -33,6 +34,9 @@ public class ClientGUIDB extends JFrame {
 
         // login, has username and password, will check if valid
         logInPanel = new LogInPanel();
+
+        // sell, will only appear if there is a new item to be added
+        sellPanel = new SellPanel();
 
         // buy/sell
         transactionPanel = new TransactionPanel();
@@ -351,6 +355,15 @@ public class ClientGUIDB extends JFrame {
 
     }
 
+    //TODO: MAKE A FUCKING SELL PANEL
+    private class SellPanel extends JPanel{
+        JTextArea nameArea;
+        JTextField descriptionField, priceField, unitField;
+        JButton addItem;
+
+
+
+    }
     /*
      * display items in database in the JTextArea
      * @param textArea  the text area to append the items
@@ -401,7 +414,7 @@ public class ClientGUIDB extends JFrame {
                     boolean registered = false;
 
                     // get input user name
-                    String username = registerPanel.userName.getText();
+                    username = registerPanel.userName.getText();
 
                     // inquiry database
                     String sql = "SELECT * FROM engr_class019.registration where (username = '"+username+"')";
@@ -454,7 +467,7 @@ public class ClientGUIDB extends JFrame {
 
                     boolean logIn = false;
 
-                    String username = logInPanel.userName.getText();
+                    username = logInPanel.userName.getText();
                     String password = String.valueOf(logInPanel.password.getPassword());
                     String sql = "SELECT * FROM engr_class019.registration where (username = '"+username+"')";
                     mySQL.connectToDataBase(sql);
@@ -466,6 +479,7 @@ public class ClientGUIDB extends JFrame {
                         pwd = resultSet.getString("password");
                         // log in success
                         if (user.equals(username) && password.equals(pwd)){
+
                             type = resultSet.getString("type");
                             logIn = true;
                             break;
@@ -485,7 +499,7 @@ public class ClientGUIDB extends JFrame {
                 }
                 //Logic of transaction panel
                 else if (e.getSource() == transactionPanel.searchButton || e.getSource() == transactionPanel.sellButton
-                        || e.getSource() == transactionPanel.buyButton || e.getSource() == transactionPanel.addToCart){
+                         || e.getSource() == transactionPanel.addToCart){
 
                     boolean itemInStock = false;
                     String itemName;
@@ -522,13 +536,13 @@ public class ClientGUIDB extends JFrame {
 
                         if(e.getSource() == transactionPanel.sellButton) sellItem(itemName, 1);
                         else if(e.getSource() == transactionPanel.addToCart) updateCart(itemName, price);
-                        else if(e.getSource() == transactionPanel.buyButton){ buyItems(); }
                     }
                     else{
                         JOptionPane.showMessageDialog(ClientGUIDB.this,
                                 "Item not found.");
                     }
                 }
+                else if(e.getSource() == transactionPanel.buyButton){ buyItemsInCart(); }
                 else if(e.getSource() == transactionPanel.logoutButton) logoutUser();
 
                 if (e.getSource() == transactionPanel.sellButton){
@@ -550,10 +564,12 @@ public class ClientGUIDB extends JFrame {
             addPanel.setVisible(true);
         }
 
-        //Swaps client back to main panel and resets their permission
+        //Swaps client back to main panel, resets their permission, and resets cart
         private void logoutUser(){
             type = "";
+            username = "";
             cartList.clear();
+            transactionPanel.cartArea.setText("");
             swapPanel(mainPanel, transactionPanel);
         }
 
@@ -585,12 +601,12 @@ public class ClientGUIDB extends JFrame {
     }
 
 
-    public void buyItems(){
+    //Purchases all items in the cart
+    public void buyItemsInCart(){
 
-        String description = "";
-        double price = 0;
         int itemLeft = 0;
         boolean found = false;
+        double price = 0.0;
 
         //Checks if this client can purchase items
         if(type.equals("buyer") || type.equals("both")) {
@@ -611,13 +627,15 @@ public class ClientGUIDB extends JFrame {
                             if (currentItem.toLowerCase().equals(resultSet.getString("itemname").toLowerCase())) {
                                 found = true;
                                 itemLeft = resultSet.getInt("numitems");
+                                price = resultSet.getDouble("price");
                             }
 
                         }
 
                         if (found) {
                             //Update the database with the number of items purchased
-                            itemLeft -= cartList.get(currentItem);
+                            Integer transactionItem = cartList.get(currentItem);
+                            itemLeft -= transactionItem;
 
                             //Yes, this has the potential to pull up multiple error messages
                             if (itemLeft < 0) {
@@ -625,6 +643,9 @@ public class ClientGUIDB extends JFrame {
                                         "Not enough " + currentItem + " in stock.");
                             } else {
                                 sql = "update item set numitems=" + itemLeft + " where (itemname='" + currentItem + "')";
+                                statement.executeUpdate(sql);
+                                sql = "INSERT INTO transactionHistory VALUES ('"+username+"', '"+currentItem+"'," +
+                                        " '"+transactionItem+"', '"+price*transactionItem+"', '"+type+"')";
                                 statement.executeUpdate(sql);
                             }
 
@@ -742,7 +763,7 @@ public class ClientGUIDB extends JFrame {
 
                 // write to table
                 if (table.equals("registration")) {
-                    String username = registerPanel.userName.getText();
+                    username = registerPanel.userName.getText();
                     String password = String.valueOf(registerPanel.password.getPassword());
 
                     sql = "insert into " + table + "(username, password) values('"+username+"', '"+password+"')";
