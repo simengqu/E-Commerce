@@ -2,6 +2,6 @@
 .class
 .xml
 .iml
-scratch
-scratch2
+scratch/
+scratch2/
 .idea
